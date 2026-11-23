@@ -11,7 +11,7 @@ import { useParams } from "next/navigation";
 type ExtraPrice = Record<number, { perCategory: Record<number, number>; perUnit: number | null }>;
 type Slot = { date: string; startTime: string; startTimeId: number; available: number; prices: { USD: Record<number, number>; EUR: Record<number, number> }; extraPrices: { USD: ExtraPrice; EUR: ExtraPrice } };
 type Extra = { id: number; title: string; information: string; perPerson: boolean; maxPerBooking: number; included: boolean; required: boolean };
-type Info = { id: number; title: string; excerpt?: string; photo: string | null; durationText?: string; cancellationPolicy: string | null; rateId: number; extras: Extra[]; categories: { id: number; title: string; isDefault: boolean }[]; slots: Slot[] };
+type Info = { visitorCountry?: string | null; id: number; title: string; excerpt?: string; photo: string | null; durationText?: string; cancellationPolicy: string | null; rateId: number; extras: Extra[]; categories: { id: number; title: string; isDefault: boolean }[]; slots: Slot[] };
 type Method = "ideal" | "googlepay" | "applepay" | "card";
 
 const money = (n: number, cur: string) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(n);
@@ -29,9 +29,6 @@ export default function Book() {
   const [extraQty, setExtraQty] = useState<Record<number, number>>({}); // per-persoon: 0/1 (voor alle deelnemers), per-boeking: aantal
   const [showExtras, setShowExtras] = useState(false);
   const [c, setC] = useState({ email: "", firstname: "", surname: "", phone: "", country: "NL", terms: false });
-  const [addr, setAddr] = useState({ street: "", postcode: "", city: "", country: "" });
-  // ACI eist minimaal straat + land (getest 23-11-2026). Land komt uit de klantgegevens.
-  const addrOk = addr.street.trim().length > 1;
   const [touched, setTouched] = useState(false);
   const [method, setMethod] = useState<Method | null>(null);
   const [pay, setPay] = useState<{ scriptUrl: string; brands: string; shopperResultUrl: string; amount: number; currency: string; expiresAt: number; order: string } | null>(null);
@@ -44,6 +41,7 @@ export default function Book() {
       .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.error); return j as Info; })
       .then((j) => {
         setInfo(j);
+        if (j.visitorCountry) setC((x) => ({ ...x, country: String(j.visitorCountry).toUpperCase() }));
         const def = j.categories.find((x) => x.isDefault) ?? j.categories[0];
         if (def) setPax({ [def.id]: 1 });
         if (j.slots[0]) { setMonth(j.slots[0].date.slice(0, 7)); setDate(j.slots[0].date); setSlotId(j.slots[0].startTimeId); }
@@ -95,14 +93,13 @@ export default function Book() {
   const detailsOk = emailOk && phoneOk && c.firstname.trim() && c.surname.trim() && c.terms;
 
   async function startPayment(m: Method) {
-    const needsAddr = m === "ideal"; // kaart: adres zit in het ACI-kaartformulier zelf
-    if (m === method && !(needsAddr && !pay)) return;
+    if (m === method) return; // kaart: straat + land zitten in het ACI-kaartformulier zelf; iDEAL: geen adres
     setMethod(m); setPayErr("");
     // Vorige reservering vrijgeven als de klant van betaalmethode wisselt.
     if (pay) { fetch("/api/abort", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: pay.order }) }).catch(() => {}); setPay(null); }
 
     if (!info || !slot) return;
-    if (m === "ideal" && !addrOk) return; // iDEAL: eerst factuuradres (zolang ACI dat verplicht stelt)
+
     setBusy(true); setPay(null);
     try {
       // Extra's per deelnemer (Bókun: passengers[].extras met extraId + quantity — geverifieerd 23-11-2026;
@@ -118,7 +115,7 @@ export default function Book() {
           method: m, travelDate: slot.date,
           customer: {
             firstname: c.firstname.trim(), surname: c.surname.trim(), email: c.email.trim(), phone: c.phone.replace(/[\s-]/g, ""), country: (c.country || "NL").toUpperCase(),
-            ...(m === "ideal" ? { address: { street: addr.street.trim(), city: addr.city.trim(), postcode: addr.postcode.trim(), country: (addr.country || c.country).trim().toUpperCase() } } : {}),
+
           },
           booking: { mainContactDetails: [], activityBookings: [{ activityId: info.id, rateId: info.rateId, startTimeId: slot.startTimeId, date: slot.date, passengers }] },
         }),
@@ -298,13 +295,6 @@ export default function Book() {
                     </button>
                     {method === m && (
                       <div className="kac-pm-b">
-                        {m === "ideal" && !pay && !busy && (
-                          <>
-                            <label className="kac-label" htmlFor="st" style={{ marginTop: 0 }}>Street and house number</label>
-                            <input id="st" className="kac-input" autoComplete="address-line1" value={addr.street} onChange={(e) => setAddr({ ...addr, street: e.target.value })} />
-                            <button className="kac-btn" disabled={!addrOk} onClick={() => startPayment(m)}>Continue</button>
-                          </>
-                        )}
                         {busy && <p className="kac-pm-off">Reserving your spot…</p>}
                         {payErr && <p className="kac-err">{payErr}</p>}
                         {pay && (

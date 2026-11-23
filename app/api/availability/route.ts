@@ -58,6 +58,7 @@ export async function GET(req: Request) {
       })
       .filter(Boolean);
     return NextResponse.json({
+      visitorCountry: req.headers.get("x-vercel-ip-country") || null,
       id,
       title: a.title,
       excerpt: a.excerpt,

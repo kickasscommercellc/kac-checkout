@@ -38,9 +38,6 @@ async function handle(req: Request) {
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const { method, booking, customer, travelDate } = parsed.data;
-  if (method === "ideal" && !customer.address) {
-    return NextResponse.json({ error: "Billing address is required" }, { status: 400 });
-  }
 
   // Tweede slot: Bókun dwingt het Distribution Filter NIET af via de API (getest 23-11-2026).
   // Daarom staan per aanbieder alleen expliciet toegestane producten toe.
