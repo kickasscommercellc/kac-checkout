@@ -92,11 +92,12 @@ export default function Book() {
     if (!info || !slot) return;
     setBusy(true); setPay(null);
     try {
-      // Extra's per deelnemer (Bókun: PassengerBookingRequest.extras). Per-boeking-extra's op de eerste deelnemer.
-      const perPerson = chosenExtras.filter((e) => e.perPerson).map((e) => ({ extraId: e.id, unitCount: 1 }));
-      const perBooking = chosenExtras.filter((e) => !e.perPerson).map((e) => ({ extraId: e.id, unitCount: extraQty[e.id] }));
+      // Extra's per deelnemer (Bókun: passengers[].extras met extraId + quantity — geverifieerd 23-11-2026;
+      // het veld "unitCount" uit de OpenAPI-spec wordt door Bókun genegeerd). Per-boeking-extra's op de eerste deelnemer.
+      const perPerson = chosenExtras.filter((e) => e.perPerson).map((e) => ({ extraId: e.id, quantity: 1 }));
+      const perBooking = chosenExtras.filter((e) => !e.perPerson).map((e) => ({ extraId: e.id, quantity: extraQty[e.id] }));
       const passengers = Object.entries(pax)
-        .flatMap(([id, n]) => Array.from({ length: n }, () => ({ pricingCategoryId: Number(id), extras: [...perPerson] as { extraId: number; unitCount: number }[] })))
+        .flatMap(([id, n]) => Array.from({ length: n }, () => ({ pricingCategoryId: Number(id), extras: [...perPerson] as { extraId: number; quantity: number }[] })))
         .map((p, i) => (i === 0 ? { ...p, extras: [...p.extras, ...perBooking] } : p));
       const res = await fetch("/api/reserve", {
         method: "POST", headers: { "Content-Type": "application/json" },

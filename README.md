@@ -25,6 +25,8 @@ Eigen booking-checkout die Bókun "external payment" gebruikt:
 - [x] Vrijgeven via GET `/booking.json/{code}/abort-reserved`
 - [x] Verplichte hoofdcontact-velden: firstName, lastName, email, phoneNumber (geldig nummer)
 - [!] Bókun dwingt het Distribution Filter NIET af via de API → `ALLOWED_ACTIVITY_IDS` is verplicht
+- [x] Extra's: `passengers[].extras = [{ extraId, quantity }]` (NIET `unitCount` — dat negeert Bókun)
+- [x] Prijzen per categorie en extra's per valuta via `availabilities` → `pricesByRate`
 
 ## Nog te verifiëren
 - confirm-reserved na een echte (test)betaling
