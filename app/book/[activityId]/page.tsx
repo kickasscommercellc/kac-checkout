@@ -55,9 +55,14 @@ export default function Book() {
 
   useEffect(() => {
     if (!pay) return;
-    // Alleen kaartgegevens; naam, e-mail, telefoon en land sturen we server-side mee.
-    // (Mocht ACI toch een adres eisen: COPYandPAY-optie billingAddress + mandatoryBillingFields toont adresvelden in hetzelfde formulier.)
-    (window as any).wpwlOptions = { style: "plain" };
+    // Kaart: ACI eist een straat (100.800.100). Adres in hetzelfde formulier, minimaal verplicht: straat + land (vooringevuld).
+    (window as any).wpwlOptions = method === "card"
+      ? {
+          style: "plain",
+          billingAddress: { country: (c.country || "").toUpperCase() },
+          mandatoryBillingFields: { country: true, state: false, city: false, postcode: false, street1: true, street2: false },
+        }
+      : { style: "plain" };
     const s = document.createElement("script");
     s.src = pay.scriptUrl; s.async = true;
     document.body.appendChild(s);
