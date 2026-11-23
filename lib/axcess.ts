@@ -35,7 +35,7 @@ export async function createCheckout(p: { amount: number; currency: string; merc
     merchantTransactionId: p.merchantTransactionId,
   };
   // iDEAL in de testomgeving: testMode=EXTERNAL (advies AxcessMS, 23-11-2026). Nooit live.
-  if (p.method === "ideal" && /test/.test(env("AXCESS_BASE_URL"))) form.testMode = "EXTERNAL";
+  if ((p.method === "ideal" || p.method === "paypal") && /test/.test(env("AXCESS_BASE_URL"))) form.testMode = "EXTERNAL";
   // Klant- en adresgegevens (ACI weigert kaartbetalingen zonder: 200.100.504).
   const c = p.customer;
   if (c) {

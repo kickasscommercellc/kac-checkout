@@ -12,7 +12,7 @@ import { env } from "../../../lib/env";
  * Het bedrag komt ALTIJD uit Bókun, nooit uit de browser.
  */
 const Body = z.object({
-  method: z.enum(["card", "ideal", "applepay", "googlepay"]),
+  method: z.enum(["card", "ideal", "applepay", "googlepay", "paypal"]),
   booking: z.custom<BookingRequest>((v) => typeof v === "object" && v !== null),
   customer: z.object({
     firstname: z.string().min(1),
@@ -61,7 +61,7 @@ async function handle(req: Request) {
     return NextResponse.json({ error: "Stripe is nog niet gekoppeld" }, { status: 501 });
   }
   const provider = cardProvider === "tmt" ? "tmt" : "axcess";
-  const currency = method === "card" ? env("TMT_CURRENCY") : "EUR";
+  const currency = method === "card" || method === "paypal" ? env("TMT_CURRENCY") : "EUR";
 
   const { confirmationCode, raw } = await reserveForExternalPayment(booking, 0, currency);
 
@@ -103,7 +103,7 @@ async function handle(req: Request) {
       axcess: {
         checkoutId,
         scriptUrl: widgetScriptUrl(checkoutId),
-        brands: ({ card: "VISA MASTER", ideal: "IDEAL_VA", applepay: "APPLEPAY", googlepay: "GOOGLEPAY" } as Record<string, string>)[method],
+        brands: ({ card: "VISA MASTER", ideal: "IDEAL_VA", applepay: "APPLEPAY", googlepay: "GOOGLEPAY", paypal: "PAYPAL" } as Record<string, string>)[method],
         shopperResultUrl: `${env("APP_BASE_URL")}/api/axcess/result?order=${encodeURIComponent(order)}`,
       },
     });

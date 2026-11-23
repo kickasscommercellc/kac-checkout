@@ -12,7 +12,7 @@ type ExtraPrice = Record<number, { perCategory: Record<number, number>; perUnit:
 type Slot = { date: string; startTime: string; startTimeId: number; available: number; prices: { USD: Record<number, number>; EUR: Record<number, number> }; extraPrices: { USD: ExtraPrice; EUR: ExtraPrice } };
 type Extra = { id: number; title: string; information: string; perPerson: boolean; maxPerBooking: number; included: boolean; required: boolean };
 type Info = { visitorCountry?: string | null; id: number; title: string; excerpt?: string; photo: string | null; durationText?: string; cancellationPolicy: string | null; rateId: number; extras: Extra[]; categories: { id: number; title: string; isDefault: boolean }[]; slots: Slot[] };
-type Method = "ideal" | "googlepay" | "applepay" | "card";
+type Method = "ideal" | "googlepay" | "applepay" | "card" | "paypal";
 
 const money = (n: number, cur: string) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(n);
 const DOW = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -298,6 +298,7 @@ export default function Book() {
                   ["googlepay", "Google Pay", ""],
                   ["applepay", "Apple Pay", "Available in Safari on Apple devices"],
                   ["card", "Cards · Visa, Mastercard", ""],
+                  ["paypal", "PayPal", ""],
                 ] as [Method, string, string][]).map(([m, label, sub]) => (
                   <div key={m} className={"kac-pm" + (method === m ? " open" : "")}>
                     <button className="kac-pm-h" onClick={() => !busy && startPayment(m)} disabled={busy}>
@@ -312,6 +313,7 @@ export default function Book() {
                           <>
                             <p style={{ margin: "0 0 8px" }}>Amount: <b>{money(pay.amount, pay.currency)}</b></p>
                             {m === "ideal" && <p className="kac-pm-off" style={{ margin: "0 0 4px" }}>You'll approve the payment in your banking app and return here automatically.</p>}
+                            {m === "paypal" && <p className="kac-pm-off" style={{ margin: "0 0 4px" }}>You'll log in to PayPal to approve the payment and return here automatically.</p>}
                             <form action={pay.shopperResultUrl} className="paymentWidgets" data-brands={pay.brands}></form>
                             <div className="kac-timer">Your spot is held for {Math.max(0, Math.round((pay.expiresAt - now) / 60000))} more minutes.</div>
                           </>
