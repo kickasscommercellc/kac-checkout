@@ -23,7 +23,7 @@ async function oppFetch(method: "GET" | "POST", path: string, form?: Record<stri
 
 export type OppCustomer = {
   firstname: string; surname: string; email: string; phone?: string; country: string; ip?: string | null;
-  address?: { street: string; city: string; postcode: string; country: string };
+  address?: { street: string; city?: string; postcode?: string; country: string };
 };
 
 export async function createCheckout(p: { amount: number; currency: string; merchantTransactionId: string; customer?: OppCustomer; method?: string }) {
@@ -47,8 +47,8 @@ export async function createCheckout(p: { amount: number; currency: string; merc
     form["billing.country"] = (c.address?.country || c.country).toUpperCase();
     if (c.address) {
       form["billing.street1"] = c.address.street;
-      form["billing.city"] = c.address.city;
-      form["billing.postcode"] = c.address.postcode;
+      if (c.address.city) form["billing.city"] = c.address.city;
+      if (c.address.postcode) form["billing.postcode"] = c.address.postcode;
     }
   }
   const json = await oppFetch("POST", "/v1/checkouts", form);

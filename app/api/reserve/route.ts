@@ -20,7 +20,7 @@ const Body = z.object({
     email: z.string().email(),
     country: z.string().length(2),
     phone: z.string().min(6), // Bókun vereist een geldig telefoonnummer (bijv. +31612345678)
-    address: z.object({ street: z.string().min(2), city: z.string().min(1), postcode: z.string().min(1), country: z.string().length(2) }).optional(),
+    address: z.object({ street: z.string().min(2), city: z.string().optional().default(""), postcode: z.string().optional().default(""), country: z.string().length(2) }).optional(),
   }),
   travelDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });

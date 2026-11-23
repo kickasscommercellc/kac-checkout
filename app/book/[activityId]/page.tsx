@@ -30,7 +30,8 @@ export default function Book() {
   const [showExtras, setShowExtras] = useState(false);
   const [c, setC] = useState({ email: "", firstname: "", surname: "", phone: "", country: "NL", terms: false });
   const [addr, setAddr] = useState({ street: "", postcode: "", city: "", country: "" });
-  const addrOk = addr.street.trim().length > 1 && addr.postcode.trim() && addr.city.trim() && /^[A-Za-z]{2}$/.test(addr.country.trim());
+  // ACI eist minimaal straat + land (getest 23-11-2026). Land komt uit de klantgegevens.
+  const addrOk = addr.street.trim().length > 1;
   const [touched, setTouched] = useState(false);
   const [method, setMethod] = useState<Method | null>(null);
   const [pay, setPay] = useState<{ scriptUrl: string; brands: string; shopperResultUrl: string; amount: number; currency: string; expiresAt: number; order: string } | null>(null);
@@ -116,8 +117,8 @@ export default function Book() {
         body: JSON.stringify({
           method: m, travelDate: slot.date,
           customer: {
-            firstname: c.firstname.trim(), surname: c.surname.trim(), email: c.email.trim(), phone: c.phone.replace(/[\s-]/g, ""), country: (addr.country || c.country).toUpperCase(),
-            ...(m === "ideal" ? { address: { street: addr.street.trim(), city: addr.city.trim(), postcode: addr.postcode.trim(), country: addr.country.trim().toUpperCase() } } : {}),
+            firstname: c.firstname.trim(), surname: c.surname.trim(), email: c.email.trim(), phone: c.phone.replace(/[\s-]/g, ""), country: (c.country || "NL").toUpperCase(),
+            ...(m === "ideal" ? { address: { street: addr.street.trim(), city: addr.city.trim(), postcode: addr.postcode.trim(), country: (addr.country || c.country).trim().toUpperCase() } } : {}),
           },
           booking: { mainContactDetails: [], activityBookings: [{ activityId: info.id, rateId: info.rateId, startTimeId: slot.startTimeId, date: slot.date, passengers }] },
         }),
@@ -299,13 +300,8 @@ export default function Book() {
                       <div className="kac-pm-b">
                         {m === "ideal" && !pay && !busy && (
                           <>
-                            <p className="kac-pm-off" style={{ margin: "0 0 4px" }}>Billing address</p>
-                            <input className="kac-input" placeholder="Street and number" autoComplete="address-line1" value={addr.street} onChange={(e) => setAddr({ ...addr, street: e.target.value })} />
-                            <div className="kac-row" style={{ marginTop: 10 }}>
-                              <input className="kac-input" placeholder="Postcode" autoComplete="postal-code" value={addr.postcode} onChange={(e) => setAddr({ ...addr, postcode: e.target.value })} />
-                              <input className="kac-input" placeholder="City" autoComplete="address-level2" value={addr.city} onChange={(e) => setAddr({ ...addr, city: e.target.value })} />
-                            </div>
-                            <input className="kac-input" style={{ marginTop: 10 }} placeholder="Country code (e.g. US, NL)" maxLength={2} autoComplete="country" value={addr.country} onChange={(e) => setAddr({ ...addr, country: e.target.value.toUpperCase() })} />
+                            <label className="kac-label" htmlFor="st" style={{ marginTop: 0 }}>Street and house number</label>
+                            <input id="st" className="kac-input" autoComplete="address-line1" value={addr.street} onChange={(e) => setAddr({ ...addr, street: e.target.value })} />
                             <button className="kac-btn" disabled={!addrOk} onClick={() => startPayment(m)}>Continue</button>
                           </>
                         )}
