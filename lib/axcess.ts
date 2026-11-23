@@ -44,7 +44,8 @@ export async function createCheckout(p: { amount: number; currency: string; merc
     form["customer.email"] = c.email;
     if (c.phone) form["customer.mobile"] = c.phone;
     if (c.ip) form["customer.ip"] = c.ip;
-    form["billing.country"] = (c.address?.country || c.country).toUpperCase();
+    // Bij kaart komt billing.* uit het ACI-kaartformulier zelf; dubbel zetten geeft 200.300.404 ("cannot be overwritten").
+    if (p.method !== "card") form["billing.country"] = (c.address?.country || c.country).toUpperCase();
     if (c.address) {
       form["billing.street1"] = c.address.street;
       if (c.address.city) form["billing.city"] = c.address.city;
