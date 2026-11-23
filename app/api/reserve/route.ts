@@ -97,7 +97,7 @@ async function handle(req: Request) {
     }
 
     const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || null;
-    const { checkoutId } = await createCheckout({ amount, currency, merchantTransactionId: confirmationCode, customer: { ...customer, ip } });
+    const { checkoutId } = await createCheckout({ amount, currency, merchantTransactionId: confirmationCode, customer: { ...customer, ip }, method });
     return NextResponse.json({
       provider,
       order,
@@ -106,7 +106,7 @@ async function handle(req: Request) {
       axcess: {
         checkoutId,
         scriptUrl: widgetScriptUrl(checkoutId),
-        brands: ({ card: "VISA MASTER", ideal: "IDEAL", applepay: "APPLEPAY", googlepay: "GOOGLEPAY" } as Record<string, string>)[method],
+        brands: ({ card: "VISA MASTER", ideal: "IDEAL_VA", applepay: "APPLEPAY", googlepay: "GOOGLEPAY" } as Record<string, string>)[method],
         shopperResultUrl: `${env("APP_BASE_URL")}/api/axcess/result?order=${encodeURIComponent(order)}`,
       },
     });

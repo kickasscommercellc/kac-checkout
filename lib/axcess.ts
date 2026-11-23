@@ -26,7 +26,7 @@ export type OppCustomer = {
   address?: { street: string; city: string; postcode: string; country: string };
 };
 
-export async function createCheckout(p: { amount: number; currency: string; merchantTransactionId: string; customer?: OppCustomer }) {
+export async function createCheckout(p: { amount: number; currency: string; merchantTransactionId: string; customer?: OppCustomer; method?: string }) {
   const form: Record<string, string> = {
     entityId: env("AXCESS_ENTITY_ID"),
     amount: p.amount.toFixed(2),
@@ -34,6 +34,8 @@ export async function createCheckout(p: { amount: number; currency: string; merc
     paymentType: "DB",
     merchantTransactionId: p.merchantTransactionId,
   };
+  // iDEAL in de testomgeving: testMode=EXTERNAL (advies AxcessMS, 23-11-2026). Nooit live.
+  if (p.method === "ideal" && /test/.test(env("AXCESS_BASE_URL"))) form.testMode = "EXTERNAL";
   // Klant- en adresgegevens (ACI weigert kaartbetalingen zonder: 200.100.504).
   const c = p.customer;
   if (c) {
