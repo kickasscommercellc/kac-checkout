@@ -87,11 +87,16 @@ async function handle(req: Request) {
     }
 
     const { checkoutId } = await createCheckout({ amount, currency, merchantTransactionId: confirmationCode });
+    // Tijdelijke diagnose (alleen bij ?debug=1): wat Bókun van de activiteit-boeking heeft gemaakt.
+    const debug = new URL(req.url).searchParams.get("debug") === "1"
+      ? { sent: booking.activityBookings, bokunActivityBooking: (b?.activityBookings || [])[0] }
+      : undefined;
     return NextResponse.json({
       provider,
       order,
       amount,
       currency,
+      debug,
       axcess: {
         checkoutId,
         scriptUrl: widgetScriptUrl(checkoutId),
