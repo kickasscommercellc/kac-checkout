@@ -16,7 +16,7 @@
   padding: 24px 16px 96px;
 }
 .kac * { box-sizing: border-box; }
-.kac-wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 24px; grid-template-columns: 1fr; }
+.kac-wrap { max-width: 1040px; width: 100%; margin: 0 auto; display: grid; gap: 24px; grid-template-columns: 1fr; }
 @media (min-width: 900px) { .kac-wrap { grid-template-columns: 1.15fr 0.85fr; align-items: start; } }
 
 .kac-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
@@ -48,7 +48,7 @@
 .kac-cal-nav button:disabled { color: #c4ccd3; cursor: default; }
 .kac-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
 .kac-cal .dow { font-size: 12px; color: var(--muted); font-weight: 600; }
-.kac-day { aspect-ratio: 1; border-radius: 10px; border: 0; background: none; color: #b9c2ca; font-size: 15px; }
+.kac-day { height: 42px; border-radius: 10px; border: 0; background: none; color: #b9c2ca; font-size: 15px; }
 .kac-day.av { background: #d9f2ec; color: var(--text); font-weight: 600; cursor: pointer; }
 .kac-day.sel { background: var(--brand-dark); color: #fff; }
 
