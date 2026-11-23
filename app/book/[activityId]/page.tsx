@@ -238,6 +238,7 @@ export default function Book() {
                         {m !== "card" && pay && (
                           <>
                             <p style={{ margin: "0 0 8px" }}>Amount: <b>{money(pay.amount, pay.currency)}</b></p>
+                            {m === "ideal" && <p className="kac-pm-off" style={{ margin: "0 0 4px" }}>You'll approve the payment in your banking app and return here automatically.</p>}
                             <form action={pay.shopperResultUrl} className="paymentWidgets" data-brands={pay.brands}></form>
                             <div className="kac-timer">Your spot is held for {Math.max(0, Math.round((pay.expiresAt - now) / 60000))} more minutes.</div>
                           </>

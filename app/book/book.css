@@ -86,3 +86,18 @@
 .kac-sticky { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 12px 16px; display: flex; gap: 12px; align-items: center; }
 .kac-sticky .kac-btn { margin: 0; }
 @media (min-width: 900px) { .kac-sticky { display: none; } }
+
+/* AxcessMS COPYandPAY: iDEAL | Wero als één duidelijke knop i.p.v. los logo-vak */
+.kac .wpwl-container { box-shadow: none !important; border: 0 !important; background: transparent !important; padding: 0 !important; margin: 0 !important; max-width: none !important; }
+.kac .wpwl-form { max-width: none !important; margin: 0 !important; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+.kac .wpwl-form-onlineTransfer-IDEAL .wpwl-group-button { width: 100% !important; margin: 0 !important; }
+.kac .wpwl-form-onlineTransfer-IDEAL .wpwl-button-brand {
+  width: 100% !important; height: auto !important; margin: 4px 0 0 !important; padding: 15px 20px !important;
+  border: 0 !important; border-radius: 999px !important; cursor: pointer;
+  background: linear-gradient(90deg, var(--brand), var(--brand-dark)) !important;
+  display: flex !important; align-items: center; justify-content: center; gap: 10px;
+  color: #fff !important; font: 600 17px Inter, system-ui, sans-serif !important;
+}
+.kac .wpwl-form-onlineTransfer-IDEAL .wpwl-button-brand .wpwl-brand { display: none !important; }
+.kac .wpwl-form-onlineTransfer-IDEAL .wpwl-button-brand::after { content: "Continue to iDEAL | Wero"; }
+.kac .wpwl-form-onlineTransfer-IDEAL .wpwl-button-brand:hover { filter: brightness(1.08); }
