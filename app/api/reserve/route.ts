@@ -18,6 +18,7 @@ const Body = z.object({
     surname: z.string().min(1),
     email: z.string().email(),
     country: z.string().length(2),
+    phone: z.string().min(6), // Bókun vereist een geldig telefoonnummer (bijv. +31612345678)
   }),
   travelDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
@@ -27,6 +28,21 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const { method, booking, customer, travelDate } = parsed.data;
 
+  // Tweede slot: Bókun dwingt het Distribution Filter NIET af via de API (getest 23-11-2026).
+  // Daarom staan per aanbieder alleen expliciet toegestane producten toe.
+  const allowed = new Set(env("ALLOWED_ACTIVITY_IDS").split(",").map((s) => Number(s.trim())));
+  if (!booking.activityBookings?.length || booking.activityBookings.some((a) => !allowed.has(Number(a.activityId)))) {
+    return NextResponse.json({ error: "Product niet toegestaan voor deze aanbieder" }, { status: 403 });
+  }
+
+  // Hoofdcontact altijd vanuit de gevalideerde klantgegevens opbouwen.
+  booking.mainContactDetails = [
+    { questionId: "firstName", values: [customer.firstname] },
+    { questionId: "lastName", values: [customer.surname] },
+    { questionId: "email", values: [customer.email] },
+    { questionId: "phoneNumber", values: [customer.phone] },
+  ];
+
   // Kaart = TMT in channel-valuta (bijv. USD). iDEAL/wallets via AxcessMS: iDEAL kan alleen EUR.
   const provider = method === "card" ? "tmt" : "axcess";
   const currency = provider === "tmt" ? env("TMT_CURRENCY") : "EUR";
@@ -34,9 +50,9 @@ export async function POST(req: Request) {
   const { confirmationCode, raw } = await reserveForExternalPayment(booking, 0, currency);
 
   try {
-    // Totaalbedrag uit de Bókun-reservering. (Veldnaam in fase 1 verifiëren met test-account.)
+    // Totaalbedrag uit de Bókun-reservering (veld totalPrice, geverifieerd 23-11-2026).
     const b = raw?.booking ?? raw;
-    const amount = Number(b?.totalPrice ?? b?.totalDue ?? b?.totalPriceAmount);
+    const amount = Number(b?.totalPrice);
     if (!Number.isFinite(amount) || amount <= 0) throw new Error("Geen totaalbedrag in Bókun-response");
 
     const order = encodeOrder({
@@ -55,7 +71,7 @@ export async function POST(req: Request) {
         order,
         amount,
         currency,
-        tmt: tmtModalConfig({ totalCents, reference: confirmationCode, date: travelDate, ...customer }),
+        tmt: tmtModalConfig({ totalCents, reference: confirmationCode, date: travelDate, firstname: customer.firstname, surname: customer.surname, email: customer.email, country: customer.country }),
       });
     }
 

@@ -18,11 +18,17 @@ Eigen booking-checkout die Bókun "external payment" gebruikt:
 - [ ] Testen met echte test-accounts (zie "Te verifiëren")
 - [ ] Database + webhooks + rapportage (fase d)
 
-## Te verifiëren zodra test-accounts er zijn
-- Veldnaam van het totaalbedrag in de Bókun-checkout response (`app/api/reserve/route.ts`)
-- Bókun abort-reserved: GET (OpenAPI-spec) of POST (help-artikel)
+## Geverifieerd tegen live Bókun (23-11-2026, Demo-product #842117)
+- [x] Handtekening/authenticatie werkt
+- [x] RESERVE_FOR_EXTERNAL_PAYMENT beschikbaar (API-key: "Allow offline payment" AAN)
+- [x] Reserveren → status RESERVED, code in `booking.confirmationCode`, bedrag in `booking.totalPrice`
+- [x] Vrijgeven via GET `/booking.json/{code}/abort-reserved`
+- [x] Verplichte hoofdcontact-velden: firstName, lastName, email, phoneNumber (geldig nummer)
+- [!] Bókun dwingt het Distribution Filter NIET af via de API → `ALLOWED_ACTIVITY_IDS` is verplicht
+
+## Nog te verifiëren
+- confirm-reserved na een echte (test)betaling
 - Exacte TMT-statuswaarde voor een geslaagde betaling (`app/api/tmt/confirm/route.ts`)
-- Of RESERVE_FOR_EXTERNAL_PAYMENT beschikbaar is op de API-key/het booking channel
 
 ## API-routes
 | Route | Doel |

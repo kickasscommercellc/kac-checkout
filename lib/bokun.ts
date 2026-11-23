@@ -122,7 +122,7 @@ export function confirmReserved(
   );
 }
 
-/** Vrijgeven bij mislukte/afgebroken betaling. (Spec: GET; help-artikel noemt POST — in test verifiëren.) */
+/** Vrijgeven bij mislukte/afgebroken betaling. GET geverifieerd tegen live Bókun op 23-11-2026. */
 export function abortReserved(confirmationCode: string, timeout = false) {
   return bokunFetch<Record<string, unknown>>(
     "GET",
