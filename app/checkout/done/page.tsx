@@ -12,11 +12,13 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
   const { status = "error", code, reason } = await searchParams;
   const m = MESSAGES[status] ?? MESSAGES.error;
   return (
-    <main style={{ padding: 32, maxWidth: 560, margin: "0 auto" }}>
+    <main style={{ fontFamily: "Inter, system-ui, sans-serif", padding: "48px 20px", maxWidth: 560, margin: "40px auto", background: "#fff", border: "1px solid #e2e7ec", borderRadius: 16, textAlign: "center" }}>
+      <div style={{ fontSize: 44 }}>{status === "success" ? "✅" : status === "pending" || status === "review" || status === "attention" ? "⏳" : "⚠️"}</div>
       <h1>{m.en}</h1>
       <p>{m.nl}</p>
       {code && <p>Booking reference: <strong>{code}</strong></p>}
       {reason && <p style={{ color: "#888", fontSize: 13 }}>Technische info: {reason}</p>}
+      {(status === "failed" || status === "expired" || status === "error") && <p><a href="javascript:history.go(-2)" style={{ color: "#1f5f7a" }}>Try again</a></p>}
     </main>
   );
 }
