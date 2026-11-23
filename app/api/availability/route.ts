@@ -13,6 +13,12 @@ export async function GET(req: Request) {
     getAvailability(id, ymd(new Date(Date.now() + 864e5)), ymd(new Date(Date.now() + 31 * 864e5))),
   ]);
   const a = activity as any;
+  // Tijdelijk: ruwe structuur tonen om prijsvelden te bepalen (alleen toegestane Demo-producten, geen geheime data).
+  if (new URL(req.url).searchParams.get("raw") === "1") {
+    const cur = new URL(req.url).searchParams.get("currency") || "USD";
+    const eur = cur === "EUR" ? await getAvailability(id, ymd(new Date(Date.now() + 864e5)), ymd(new Date(Date.now() + 3 * 864e5)), "EUR") : null;
+    return NextResponse.json({ activityKeys: Object.keys(a), pricingCategories: a.pricingCategories, rates: a.rates, bookableExtras: a.bookableExtras, slot: (slots as any[])[0], eurSlot: eur && (eur as any[])[0] });
+  }
   return NextResponse.json({
     id,
     title: a.title,

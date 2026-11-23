@@ -73,8 +73,8 @@ export function getActivity(id: number) {
   return bokunFetch<Record<string, unknown>>("GET", `/activity.json/${id}?currency=USD&lang=EN`);
 }
 
-export function getAvailability(id: number, start: string, end: string) {
-  return bokunFetch<unknown[]>("GET", `/activity.json/${id}/availabilities?start=${start}&end=${end}&currency=USD&lang=EN`);
+export function getAvailability(id: number, start: string, end: string, currency = "USD") {
+  return bokunFetch<unknown[]>("GET", `/activity.json/${id}/availabilities?start=${start}&end=${end}&currency=${currency}&lang=EN`);
 }
 
 /** Stap 0: welke checkout-opties/betaalmethodes zijn toegestaan + vragen die beantwoord moeten worden. */
