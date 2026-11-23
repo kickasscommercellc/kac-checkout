@@ -86,13 +86,14 @@ export default function Book() {
   const detailsOk = emailOk && phoneOk && c.firstname.trim() && c.surname.trim() && c.terms;
 
   async function startPayment(m: Method) {
-    if (m === method && !(m === "card" && !pay)) return;
+    const needsAddr = m === "card" || m === "ideal";
+    if (m === method && !(needsAddr && !pay)) return;
     setMethod(m); setPayErr("");
     // Vorige reservering vrijgeven als de klant van betaalmethode wisselt.
     if (pay) { fetch("/api/abort", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: pay.order }) }).catch(() => {}); setPay(null); }
 
     if (!info || !slot) return;
-    if (m === "card" && !addrOk) return; // eerst factuuradres invullen
+    if ((m === "card" || m === "ideal") && !addrOk) return; // eerst factuuradres invullen
     setBusy(true); setPay(null);
     try {
       // Extra's per deelnemer (Bókun: passengers[].extras met extraId + quantity — geverifieerd 23-11-2026;
@@ -108,7 +109,7 @@ export default function Book() {
           method: m, travelDate: slot.date,
           customer: {
             firstname: c.firstname.trim(), surname: c.surname.trim(), email: c.email.trim(), phone: c.phone.replace(/[\s-]/g, ""), country: (addr.country || c.country).toUpperCase(),
-            ...(m === "card" ? { address: { street: addr.street.trim(), city: addr.city.trim(), postcode: addr.postcode.trim(), country: addr.country.trim().toUpperCase() } } : {}),
+            ...(m === "card" || m === "ideal" ? { address: { street: addr.street.trim(), city: addr.city.trim(), postcode: addr.postcode.trim(), country: addr.country.trim().toUpperCase() } } : {}),
           },
           booking: { mainContactDetails: [], activityBookings: [{ activityId: info.id, rateId: info.rateId, startTimeId: slot.startTimeId, date: slot.date, passengers }] },
         }),
@@ -288,16 +289,16 @@ export default function Book() {
                     </button>
                     {method === m && (
                       <div className="kac-pm-b">
-                        {m === "card" && !pay && !busy && (
+                        {(m === "card" || m === "ideal") && !pay && !busy && (
                           <>
-                            <p className="kac-pm-off" style={{ margin: "0 0 4px" }}>Billing address (required by your card issuer)</p>
+                            <p className="kac-pm-off" style={{ margin: "0 0 4px" }}>Billing address</p>
                             <input className="kac-input" placeholder="Street and number" autoComplete="address-line1" value={addr.street} onChange={(e) => setAddr({ ...addr, street: e.target.value })} />
                             <div className="kac-row" style={{ marginTop: 10 }}>
                               <input className="kac-input" placeholder="Postcode" autoComplete="postal-code" value={addr.postcode} onChange={(e) => setAddr({ ...addr, postcode: e.target.value })} />
                               <input className="kac-input" placeholder="City" autoComplete="address-level2" value={addr.city} onChange={(e) => setAddr({ ...addr, city: e.target.value })} />
                             </div>
                             <input className="kac-input" style={{ marginTop: 10 }} placeholder="Country code (e.g. US, NL)" maxLength={2} autoComplete="country" value={addr.country} onChange={(e) => setAddr({ ...addr, country: e.target.value.toUpperCase() })} />
-                            <button className="kac-btn" disabled={!addrOk} onClick={() => startPayment("card")}>Continue to card details</button>
+                            <button className="kac-btn" disabled={!addrOk} onClick={() => startPayment(m)}>{m === "card" ? "Continue to card details" : "Continue"}</button>
                           </>
                         )}
                         {busy && <p className="kac-pm-off">Reserving your spot…</p>}
