@@ -11,7 +11,7 @@ import { useParams } from "next/navigation";
 type ExtraPrice = Record<number, { perCategory: Record<number, number>; perUnit: number | null }>;
 type Slot = { date: string; startTime: string; startTimeId: number; available: number; prices: { USD: Record<number, number>; EUR: Record<number, number> }; extraPrices: { USD: ExtraPrice; EUR: ExtraPrice } };
 type Extra = { id: number; title: string; information: string; perPerson: boolean; maxPerBooking: number; included: boolean; required: boolean };
-type Info = { visitorCountry?: string | null; id: number; title: string; excerpt?: string; photo: string | null; durationText?: string; cancellationPolicy: string | null; rateId: number; extras: Extra[]; categories: { id: number; title: string; isDefault: boolean }[]; slots: Slot[] };
+type Info = { visitorCountry?: string | null; id: number; title: string; excerpt?: string; photo: string | null; durationText?: string; cancellationPolicy: string | null; cancellationRules?: string[]; termsUrl?: string; privacyUrl?: string; rateId: number; extras: Extra[]; categories: { id: number; title: string; isDefault: boolean }[]; slots: Slot[] };
 type Method = "ideal" | "googlepay" | "applepay" | "card" | "paypal";
 
 const money = (n: number, cur: string) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(n);
@@ -25,6 +25,7 @@ export default function Book() {
   const [month, setMonth] = useState<string>("");
   const [date, setDate] = useState("");
   const [slotId, setSlotId] = useState<number | null>(null);
+  const [showPolicy, setShowPolicy] = useState(false);
   const [pax, setPax] = useState<Record<number, number>>({});
   const [extraQty, setExtraQty] = useState<Record<number, number>>({}); // per-persoon: 0/1 (voor alle deelnemers), per-boeking: aantal
   const [showExtras, setShowExtras] = useState(false);
@@ -165,7 +166,20 @@ export default function Book() {
         {extraLines(shownCur).map((l) => <div className="kac-line" key={"x" + l.title}><span>{l.n} × {l.title}</span><span>{money(l.sum, shownCur)}</span></div>)}
         {(info.extras ?? []).filter((e) => e.included).map((e) => <div className="kac-line" key={"i" + e.id}><span>{e.title}</span><span>Included</span></div>)}
         <div className="kac-total"><span>Total</span><span>{money(pay ? pay.amount : total(shownCur), pay ? pay.currency : shownCur)}</span></div>
-        {info.cancellationPolicy && <div className="kac-hint" style={{ marginTop: 8 }}>{info.cancellationPolicy}</div>}
+        {info.cancellationPolicy && <button type="button" className="kac-hint kac-a" style={{ marginTop: 8, textAlign: "left" }} onClick={() => setShowPolicy(true)}>{info.cancellationPolicy} · details</button>}
+        {showPolicy && (
+          <div className="kac-modal" role="dialog" aria-modal="true" onClick={() => setShowPolicy(false)}>
+            <div className="kac-modal-box" onClick={(e) => e.stopPropagation()}>
+              <h3 style={{ marginTop: 0 }}>Cancellation policy</h3>
+              {info.cancellationPolicy && <p><b>{info.cancellationPolicy}</b></p>}
+              {(info.cancellationRules ?? []).length > 0
+                ? <ul>{info.cancellationRules!.map((r) => <li key={r}>{r}</li>)}</ul>
+                : <p>See the product description and your booking confirmation for details.</p>}
+              <p className="kac-hint">Your booking is with the activity provider. Full terms: <a className="kac-a" href={info.termsUrl} target="_blank" rel="noopener noreferrer">Terms &amp; Conditions</a></p>
+              <button type="button" className="kac-btn" onClick={() => setShowPolicy(false)}>Close</button>
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );
@@ -274,7 +288,7 @@ export default function Book() {
                 )}
                 <label style={{ display: "flex", gap: 10, marginTop: 18, alignItems: "flex-start" }}>
                   <input type="checkbox" checked={c.terms} onChange={(e) => setC({ ...c, terms: e.target.checked })} style={{ width: 20, height: 20 }} />
-                  <span>I agree to the terms and the cancellation policy.</span>
+                  <span>I agree to the <a href={info.termsUrl} target="_blank" rel="noopener noreferrer" className="kac-a">terms</a>, the <button type="button" className="kac-a" onClick={(e) => { e.preventDefault(); setShowPolicy(true); }}>cancellation policy</button> and the <a href={info.privacyUrl} target="_blank" rel="noopener noreferrer" className="kac-a">privacy statement</a>.</span>
                 </label>
                 {touched && !c.terms && <div className="kac-err">Please accept the terms</div>}
                 <button className="kac-btn" onClick={() => {

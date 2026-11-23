@@ -65,6 +65,9 @@ export async function GET(req: Request) {
       photo: a.keyPhoto?.derived?.find((d: any) => d.name === "large")?.url || a.keyPhoto?.originalUrl || null,
       durationText: a.durationText,
       cancellationPolicy: a.rates?.[0]?.cancellationPolicy?.title ?? null,
+      cancellationRules: policyRules(a.rates?.find((r: any) => r.id === rateId)?.cancellationPolicy ?? a.rates?.[0]?.cancellationPolicy),
+      termsUrl: process.env.TERMS_URL || "https://www.kickasscommerce.com/terms-conditions",
+      privacyUrl: process.env.PRIVACY_URL || "https://www.kickasscommerce.com/privacy-cookies",
       rateId,
       extras,
       categories: (a.pricingCategories || []).filter((c: any) => !c.internalUseOnly).map((c: any) => ({ id: c.id, title: c.title, isDefault: !!c.defaultCategory })),
@@ -83,4 +86,24 @@ export async function GET(req: Request) {
     console.error(err);
     return NextResponse.json({ error: "Beschikbaarheid kon niet worden opgehaald" }, { status: 502 });
   }
+}
+
+/** Turn Bókun's cancellation policy into short, readable lines for guests. */
+function policyRules(p: any): string[] {
+  if (!p) return [];
+  const out: string[] = [];
+  if (p.policyType === "NON_REFUNDABLE") out.push("This booking is non-refundable.");
+  const rules = [...(p.penaltyRules || [])].sort((x: any, y: any) => (y.cutoffHours ?? 0) - (x.cutoffHours ?? 0));
+  for (const r of rules) {
+    const h = Number(r.cutoffHours ?? 0);
+    const when = h <= 0 ? "on the day / no-show" : h % 24 === 0 ? `less than ${h / 24} day${h === 24 ? "" : "s"} before the start` : `less than ${h} hours before the start`;
+    const isPct = String(r.chargeType || "percentage").toLowerCase().startsWith("perc");
+    const charge = isPct ? `${r.percentage ?? r.charge ?? 0}%` : `${r.amount ?? r.charge ?? 0} ${r.currency ?? ""}`.trim();
+    out.push(`Cancelling ${when}: ${charge} of the price is charged.`);
+  }
+  if (rules.length && p.policyType !== "NON_REFUNDABLE") {
+    const maxH = Number(rules[0].cutoffHours ?? 0);
+    if (maxH > 0) out.unshift(`Free cancellation up to ${maxH % 24 === 0 ? `${maxH / 24} day${maxH === 24 ? "" : "s"}` : `${maxH} hours`} before the start.`);
+  }
+  return out;
 }

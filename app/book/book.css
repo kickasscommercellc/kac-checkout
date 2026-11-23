@@ -107,3 +107,9 @@
 .kac .wpwl-group:has([name="billing.city"]),
 .kac .wpwl-group:has([name="billing.postcode"]),
 .kac .wpwl-group:has([name="billing.street2"]) { display: none !important; }
+
+/* Links in terms line + cancellation policy popup */
+.kac .kac-a { color: var(--brand-dark); text-decoration: underline; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
+.kac-modal { position: fixed; inset: 0; background: rgba(15, 30, 40, .45); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+.kac-modal-box { background: #fff; border-radius: 16px; max-width: 480px; width: 100%; max-height: 85vh; overflow: auto; padding: 22px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+.kac-modal-box ul { padding-left: 18px; }
