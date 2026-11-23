@@ -8,8 +8,10 @@ import { useParams } from "next/navigation";
  * 0 Kies  → 1 Gegevens → 2 Betalen → bevestiging (/checkout/done)
  * Prijzen en beschikbaarheid komen live uit Bókun; het te betalen bedrag komt bij reserveren uit Bókun.
  */
-type Slot = { date: string; startTime: string; startTimeId: number; available: number; prices: { USD: Record<number, number>; EUR: Record<number, number> } };
-type Info = { id: number; title: string; excerpt?: string; photo: string | null; durationText?: string; cancellationPolicy: string | null; rateId: number; categories: { id: number; title: string; isDefault: boolean }[]; slots: Slot[] };
+type ExtraPrice = Record<number, { perCategory: Record<number, number>; perUnit: number | null }>;
+type Slot = { date: string; startTime: string; startTimeId: number; available: number; prices: { USD: Record<number, number>; EUR: Record<number, number> }; extraPrices: { USD: ExtraPrice; EUR: ExtraPrice } };
+type Extra = { id: number; title: string; information: string; perPerson: boolean; maxPerBooking: number; included: boolean; required: boolean };
+type Info = { id: number; title: string; excerpt?: string; photo: string | null; durationText?: string; cancellationPolicy: string | null; rateId: number; extras: Extra[]; categories: { id: number; title: string; isDefault: boolean }[]; slots: Slot[] };
 type Method = "ideal" | "googlepay" | "applepay" | "card";
 
 const money = (n: number, cur: string) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(n);
@@ -24,6 +26,8 @@ export default function Book() {
   const [date, setDate] = useState("");
   const [slotId, setSlotId] = useState<number | null>(null);
   const [pax, setPax] = useState<Record<number, number>>({});
+  const [extraQty, setExtraQty] = useState<Record<number, number>>({}); // per-persoon: 0/1 (voor alle deelnemers), per-boeking: aantal
+  const [showExtras, setShowExtras] = useState(false);
   const [c, setC] = useState({ email: "", firstname: "", surname: "", phone: "", country: "NL", terms: false });
   const [touched, setTouched] = useState(false);
   const [method, setMethod] = useState<Method | null>(null);
@@ -60,7 +64,19 @@ export default function Book() {
   const slot = daySlots.find((s) => s.startTimeId === slotId) ?? daySlots[0];
   const paxCount = Object.values(pax).reduce((a, b) => a + b, 0);
   const lines = (cur: "USD" | "EUR") => (info?.categories ?? []).filter((cat) => pax[cat.id]).map((cat) => ({ title: cat.title, n: pax[cat.id], sum: (slot?.prices[cur][cat.id] ?? 0) * pax[cat.id] }));
-  const total = (cur: "USD" | "EUR") => lines(cur).reduce((a, l) => a + l.sum, 0);
+  const extraLine = (e: Extra, cur: "USD" | "EUR") => {
+    const p = slot?.extraPrices?.[cur]?.[e.id];
+    if (e.perPerson) return Object.entries(pax).reduce((a, [cat, n]) => a + (p?.perCategory?.[Number(cat)] ?? p?.perUnit ?? 0) * n, 0);
+    return (p?.perUnit ?? Object.values(p?.perCategory ?? {})[0] ?? 0) * (extraQty[e.id] || 0);
+  };
+  const extraUnitPrice = (e: Extra, cur: "USD" | "EUR") => {
+    const p = slot?.extraPrices?.[cur]?.[e.id];
+    const def = info?.categories.find((x) => x.isDefault)?.id ?? info?.categories[0]?.id ?? 0;
+    return p?.perCategory?.[def] ?? p?.perUnit ?? 0;
+  };
+  const chosenExtras = (info?.extras ?? []).filter((e) => !e.included && (extraQty[e.id] || 0) > 0);
+  const extraLines = (cur: "USD" | "EUR") => chosenExtras.map((e) => ({ title: e.title, n: e.perPerson ? paxCount : extraQty[e.id], sum: extraLine(e, cur) }));
+  const total = (cur: "USD" | "EUR") => lines(cur).reduce((a, l) => a + l.sum, 0) + extraLines(cur).reduce((a, l) => a + l.sum, 0);
   const shownCur: "USD" | "EUR" = method === "ideal" || method === "googlepay" || method === "applepay" ? "EUR" : "USD";
 
   const emailOk = /^\S+@\S+\.\S+$/.test(c.email);
@@ -76,7 +92,12 @@ export default function Book() {
     if (!info || !slot) return;
     setBusy(true); setPay(null);
     try {
-      const passengers = Object.entries(pax).flatMap(([id, n]) => Array.from({ length: n }, () => ({ pricingCategoryId: Number(id) })));
+      // Extra's per deelnemer (Bókun: PassengerBookingRequest.extras). Per-boeking-extra's op de eerste deelnemer.
+      const perPerson = chosenExtras.filter((e) => e.perPerson).map((e) => ({ extraId: e.id, unitCount: 1 }));
+      const perBooking = chosenExtras.filter((e) => !e.perPerson).map((e) => ({ extraId: e.id, unitCount: extraQty[e.id] }));
+      const passengers = Object.entries(pax)
+        .flatMap(([id, n]) => Array.from({ length: n }, () => ({ pricingCategoryId: Number(id), extras: [...perPerson] as { extraId: number; unitCount: number }[] })))
+        .map((p, i) => (i === 0 ? { ...p, extras: [...p.extras, ...perBooking] } : p));
       const res = await fetch("/api/reserve", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -116,6 +137,8 @@ export default function Book() {
           </div>
         )}
         {lines(shownCur).map((l) => <div className="kac-line" key={l.title}><span>{l.n} × {l.title}</span><span>{money(l.sum, shownCur)}</span></div>)}
+        {extraLines(shownCur).map((l) => <div className="kac-line" key={"x" + l.title}><span>{l.n} × {l.title}</span><span>{money(l.sum, shownCur)}</span></div>)}
+        {(info.extras ?? []).filter((e) => e.included).map((e) => <div className="kac-line" key={"i" + e.id}><span>{e.title}</span><span>Included</span></div>)}
         <div className="kac-total"><span>Total</span><span>{money(pay ? pay.amount : total(shownCur), pay ? pay.currency : shownCur)}</span></div>
         {info.cancellationPolicy && <div className="kac-hint" style={{ marginTop: 8 }}>{info.cancellationPolicy}</div>}
       </div>
@@ -198,6 +221,32 @@ export default function Book() {
                 <label className="kac-label" htmlFor="ph">Phone (with country code)</label>
                 <input id="ph" className="kac-input" type="tel" autoComplete="tel" placeholder="+31 6 12345678" value={c.phone} onChange={(e) => setC({ ...c, phone: e.target.value })} />
                 {touched && !phoneOk && <div className="kac-err">Please enter your phone number including country code, e.g. +31…</div>}
+                {(info.extras ?? []).some((e) => !e.included) && (
+                  <div className="kac-pm" style={{ marginTop: 18 }}>
+                    <button className="kac-pm-h" onClick={() => setShowExtras(!showExtras)}>
+                      <span>Add extras <span className="kac-pm-off">({(info.extras ?? []).filter((e) => !e.included).length})</span></span>
+                      <span>{showExtras ? "▾" : "›"}</span>
+                    </button>
+                    {showExtras && (
+                      <div className="kac-pm-b">
+                        {(info.extras ?? []).filter((e) => !e.included).map((e) => (
+                          <div className="kac-pax" key={e.id}>
+                            <div>{e.title}<small>+{money(extraUnitPrice(e, "USD"), "USD")} {e.perPerson ? "per person" : "each"}</small>{e.information && <small>{e.information}</small>}</div>
+                            {e.perPerson ? (
+                              <input type="checkbox" aria-label={`Add ${e.title}`} style={{ width: 22, height: 22 }} checked={(extraQty[e.id] || 0) > 0} onChange={(ev) => setExtraQty({ ...extraQty, [e.id]: ev.target.checked ? 1 : 0 })} />
+                            ) : (
+                              <div className="kac-stepper">
+                                <button aria-label={`Fewer ${e.title}`} disabled={!extraQty[e.id]} onClick={() => setExtraQty({ ...extraQty, [e.id]: Math.max(0, (extraQty[e.id] || 0) - 1) })}>−</button>
+                                <span>{extraQty[e.id] || 0}</span>
+                                <button aria-label={`More ${e.title}`} disabled={!!e.maxPerBooking && (extraQty[e.id] || 0) >= e.maxPerBooking} onClick={() => setExtraQty({ ...extraQty, [e.id]: (extraQty[e.id] || 0) + 1 })}>+</button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <label style={{ display: "flex", gap: 10, marginTop: 18, alignItems: "flex-start" }}>
                   <input type="checkbox" checked={c.terms} onChange={(e) => setC({ ...c, terms: e.target.checked })} style={{ width: 20, height: 20 }} />
                   <span>I agree to the terms and the cancellation policy.</span>
