@@ -98,7 +98,10 @@ export async function reserveForExternalPayment(request: BookingRequest, amount:
       directBooking: request,
       amount,
       currency,
-      sendNotificationToMainContact: false,
+      // Bókun lijkt de keuze bij het reserveren te onthouden; bij "false" kreeg de klant na bevestigen geen mail (23-11-2026).
+      // Test: aan bij reserveren — controleren dat de mail pas ná betaling/bevestiging komt.
+      sendNotificationToMainContact: true,
+      showPricesInNotification: true,
     },
   );
   // De confirmation code staat in de booking van de checkout-response.
