@@ -44,7 +44,7 @@ export default function Book() {
         if (j.visitorCountry) setC((x) => ({ ...x, country: String(j.visitorCountry).toUpperCase() }));
         const def = j.categories.find((x) => x.isDefault) ?? j.categories[0];
         if (def) setPax({ [def.id]: 1 });
-        if (j.slots[0]) { setMonth(j.slots[0].date.slice(0, 7)); setDate(j.slots[0].date); setSlotId(j.slots[0].startTimeId); }
+        if (j.slots[0]) { const d0 = j.slots[0].date; const ds = j.slots.filter((s: Slot) => s.date === d0); setMonth(d0.slice(0, 7)); setDate(d0); setSlotId(ds.length === 1 ? ds[0].startTimeId : null); }
       })
       .catch((e) => setLoadErr(e.message || "Kon de activiteit niet laden"));
     try { const saved = JSON.parse(localStorage.getItem("kac_guest") || "null"); if (saved) setC((x) => ({ ...x, ...saved, terms: false })); } catch {}
@@ -70,16 +70,18 @@ export default function Book() {
 
   const dates = useMemo(() => new Set(info?.slots.map((s) => s.date)), [info]);
   const daySlots = info?.slots.filter((s) => s.date === date) ?? [];
-  const slot = daySlots.find((s) => s.startTimeId === slotId) ?? daySlots[0];
+  const slot = daySlots.find((s) => s.startTimeId === slotId) ?? (daySlots.length === 1 ? daySlots[0] : undefined);
+  const needTime = daySlots.length > 1 && !slot;
+  const ps = slot ?? daySlots[0]; // prices for display before a time is chosen
   const paxCount = Object.values(pax).reduce((a, b) => a + b, 0);
-  const lines = (cur: "USD" | "EUR") => (info?.categories ?? []).filter((cat) => pax[cat.id]).map((cat) => ({ title: cat.title, n: pax[cat.id], sum: (slot?.prices[cur][cat.id] ?? 0) * pax[cat.id] }));
+  const lines = (cur: "USD" | "EUR") => (info?.categories ?? []).filter((cat) => pax[cat.id]).map((cat) => ({ title: cat.title, n: pax[cat.id], sum: (ps?.prices[cur][cat.id] ?? 0) * pax[cat.id] }));
   const extraLine = (e: Extra, cur: "USD" | "EUR") => {
-    const p = slot?.extraPrices?.[cur]?.[e.id];
+    const p = ps?.extraPrices?.[cur]?.[e.id];
     if (e.perPerson) return Object.entries(pax).reduce((a, [cat, n]) => a + (p?.perCategory?.[Number(cat)] ?? p?.perUnit ?? 0) * n, 0);
     return (p?.perUnit ?? Object.values(p?.perCategory ?? {})[0] ?? 0) * (extraQty[e.id] || 0);
   };
   const extraUnitPrice = (e: Extra, cur: "USD" | "EUR") => {
-    const p = slot?.extraPrices?.[cur]?.[e.id];
+    const p = ps?.extraPrices?.[cur]?.[e.id];
     const def = info?.categories.find((x) => x.isDefault)?.id ?? info?.categories[0]?.id ?? 0;
     return p?.perCategory?.[def] ?? p?.perUnit ?? 0;
   };
@@ -181,7 +183,7 @@ export default function Book() {
                 <span className="kac-label">People</span>
                 {info.categories.map((cat) => (
                   <div className="kac-pax" key={cat.id}>
-                    <div>{cat.title}<small>{money(slot?.prices.USD[cat.id] ?? 0, "USD")} per person</small></div>
+                    <div>{cat.title}<small>{money(ps?.prices.USD[cat.id] ?? 0, "USD")} per person</small></div>
                     <div className="kac-stepper">
                       <button aria-label={`Fewer ${cat.title}`} disabled={!pax[cat.id]} onClick={() => setPax({ ...pax, [cat.id]: Math.max(0, (pax[cat.id] || 0) - 1) })}>−</button>
                       <span>{pax[cat.id] || 0}</span>
@@ -201,20 +203,20 @@ export default function Book() {
                   {Array.from({ length: daysIn }, (_, i) => {
                     const d = `${month}-${String(i + 1).padStart(2, "0")}`;
                     const av = dates.has(d);
-                    return <button key={d} disabled={!av} className={"kac-day" + (av ? " av" : "") + (d === date ? " sel" : "")} onClick={() => { setDate(d); setSlotId(info.slots.find((s) => s.date === d)?.startTimeId ?? null); }}>{i + 1}</button>;
+                    return <button key={d} disabled={!av} className={"kac-day" + (av ? " av" : "") + (d === date ? " sel" : "")} onClick={() => { const ds = info.slots.filter((s) => s.date === d); setDate(d); setSlotId(ds.length === 1 ? ds[0].startTimeId : null); }}>{i + 1}</button>;
                   })}
                 </div>
 
                 {daySlots.length > 0 && (
                   <>
-                    <span className="kac-label">{new Date(date + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</span>
+                    <span className="kac-label">{new Date(date + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} · {daySlots.length > 1 ? "choose a time" : "start time"}</span>
                     <div className="kac-times">
-                      {daySlots.map((s) => <button key={s.startTimeId} className={"kac-time" + (s.startTimeId === slot?.startTimeId ? " sel" : "")} onClick={() => setSlotId(s.startTimeId)}>{s.startTime}</button>)}
+                      {daySlots.map((s) => <button key={s.startTimeId} className={"kac-time" + (s.startTimeId === slot?.startTimeId ? " sel" : "")} onClick={() => setSlotId(s.startTimeId)}>{s.startTimeId === slot?.startTimeId ? "✓ " : ""}{s.startTime}</button>)}
                     </div>
                     {slot && slot.available <= 5 && <p className="kac-hint">Only {slot.available} spots left</p>}
                   </>
                 )}
-                <button className="kac-btn" disabled={!slot || paxCount === 0} onClick={() => setStep(1)}>Book now · {money(total("USD"), "USD")}</button>
+                <button className="kac-btn" disabled={!slot || paxCount === 0} onClick={() => setStep(1)}>{needTime ? "Choose a time" : `Book now · ${money(total("USD"), "USD")}`}</button>
               </div>
             </>
           )}
@@ -320,7 +322,7 @@ export default function Book() {
       {step === 0 && (
         <div className="kac-sticky">
           <div style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{money(total("USD"), "USD")}</div>
-          <button className="kac-btn" disabled={!slot || paxCount === 0} onClick={() => setStep(1)}>Book now</button>
+          <button className="kac-btn" disabled={!slot || paxCount === 0} onClick={() => setStep(1)}>{needTime ? "Choose a time" : "Book now"}</button>
         </div>
       )}
     </div>

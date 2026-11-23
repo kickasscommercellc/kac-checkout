@@ -54,7 +54,7 @@
 
 .kac-times { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
 .kac-time { padding: 12px 22px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; font-size: 16px; cursor: pointer; }
-.kac-time.sel { border: 2px solid var(--brand-dark); font-weight: 600; }
+.kac-time.sel { border: 2px solid var(--brand-dark); background: var(--brand-dark); color: #fff; font-weight: 600; }
 .kac-hint { color: var(--muted); font-size: 14px; }
 
 .kac-pax { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
