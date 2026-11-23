@@ -55,6 +55,14 @@ export default function Book() {
 
   useEffect(() => {
     if (!pay) return;
+    // Kaart: factuuradres in hetzelfde ACI-formulier als de kaartgegevens (COPYandPAY billingAddress).
+    (window as any).wpwlOptions = method === "card"
+      ? {
+          style: "plain",
+          billingAddress: { country: (c.country || "").toUpperCase() },
+          mandatoryBillingFields: { country: true, state: false, city: true, postcode: true, street1: true, street2: false },
+        }
+      : { style: "plain" };
     const s = document.createElement("script");
     s.src = pay.scriptUrl; s.async = true;
     document.body.appendChild(s);
@@ -86,14 +94,14 @@ export default function Book() {
   const detailsOk = emailOk && phoneOk && c.firstname.trim() && c.surname.trim() && c.terms;
 
   async function startPayment(m: Method) {
-    const needsAddr = m === "card" || m === "ideal";
+    const needsAddr = m === "ideal"; // kaart: adres zit in het ACI-kaartformulier zelf
     if (m === method && !(needsAddr && !pay)) return;
     setMethod(m); setPayErr("");
     // Vorige reservering vrijgeven als de klant van betaalmethode wisselt.
     if (pay) { fetch("/api/abort", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: pay.order }) }).catch(() => {}); setPay(null); }
 
     if (!info || !slot) return;
-    if ((m === "card" || m === "ideal") && !addrOk) return; // eerst factuuradres invullen
+    if (m === "ideal" && !addrOk) return; // iDEAL: eerst factuuradres (zolang ACI dat verplicht stelt)
     setBusy(true); setPay(null);
     try {
       // Extra's per deelnemer (Bókun: passengers[].extras met extraId + quantity — geverifieerd 23-11-2026;
@@ -109,7 +117,7 @@ export default function Book() {
           method: m, travelDate: slot.date,
           customer: {
             firstname: c.firstname.trim(), surname: c.surname.trim(), email: c.email.trim(), phone: c.phone.replace(/[\s-]/g, ""), country: (addr.country || c.country).toUpperCase(),
-            ...(m === "card" || m === "ideal" ? { address: { street: addr.street.trim(), city: addr.city.trim(), postcode: addr.postcode.trim(), country: addr.country.trim().toUpperCase() } } : {}),
+            ...(m === "ideal" ? { address: { street: addr.street.trim(), city: addr.city.trim(), postcode: addr.postcode.trim(), country: addr.country.trim().toUpperCase() } } : {}),
           },
           booking: { mainContactDetails: [], activityBookings: [{ activityId: info.id, rateId: info.rateId, startTimeId: slot.startTimeId, date: slot.date, passengers }] },
         }),
@@ -289,7 +297,7 @@ export default function Book() {
                     </button>
                     {method === m && (
                       <div className="kac-pm-b">
-                        {(m === "card" || m === "ideal") && !pay && !busy && (
+                        {m === "ideal" && !pay && !busy && (
                           <>
                             <p className="kac-pm-off" style={{ margin: "0 0 4px" }}>Billing address</p>
                             <input className="kac-input" placeholder="Street and number" autoComplete="address-line1" value={addr.street} onChange={(e) => setAddr({ ...addr, street: e.target.value })} />
@@ -298,7 +306,7 @@ export default function Book() {
                               <input className="kac-input" placeholder="City" autoComplete="address-level2" value={addr.city} onChange={(e) => setAddr({ ...addr, city: e.target.value })} />
                             </div>
                             <input className="kac-input" style={{ marginTop: 10 }} placeholder="Country code (e.g. US, NL)" maxLength={2} autoComplete="country" value={addr.country} onChange={(e) => setAddr({ ...addr, country: e.target.value.toUpperCase() })} />
-                            <button className="kac-btn" disabled={!addrOk} onClick={() => startPayment(m)}>{m === "card" ? "Continue to card details" : "Continue"}</button>
+                            <button className="kac-btn" disabled={!addrOk} onClick={() => startPayment(m)}>Continue</button>
                           </>
                         )}
                         {busy && <p className="kac-pm-off">Reserving your spot…</p>}

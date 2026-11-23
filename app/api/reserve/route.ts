@@ -38,7 +38,7 @@ async function handle(req: Request) {
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const { method, booking, customer, travelDate } = parsed.data;
-  if ((method === "card" || method === "ideal") && !customer.address) {
+  if (method === "ideal" && !customer.address) {
     return NextResponse.json({ error: "Billing address is required" }, { status: 400 });
   }
 
