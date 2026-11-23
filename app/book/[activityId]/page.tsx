@@ -60,6 +60,15 @@ export default function Book() {
           style: "plain",
           billingAddress: { country: (c.country || "").toUpperCase() },
           mandatoryBillingFields: { country: true, state: false, city: false, postcode: false, street1: true, street2: false },
+          onReady: () => {
+            // Hide billing fields we don't need: only street + country stay visible.
+            ["billing.state", "billing.city", "billing.postcode", "billing.street2"].forEach((n) => {
+              document.querySelectorAll(`[name="${n}"]`).forEach((el) => {
+                const g = (el as HTMLElement).closest(".wpwl-group") as HTMLElement | null;
+                (g ?? (el as HTMLElement)).style.display = "none";
+              });
+            });
+          },
         }
       : { style: "plain" };
     const s = document.createElement("script");
