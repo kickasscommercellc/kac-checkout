@@ -55,14 +55,9 @@ export default function Book() {
 
   useEffect(() => {
     if (!pay) return;
-    // Kaart: factuuradres in hetzelfde ACI-formulier als de kaartgegevens (COPYandPAY billingAddress).
-    (window as any).wpwlOptions = method === "card"
-      ? {
-          style: "plain",
-          billingAddress: { country: (c.country || "").toUpperCase() },
-          mandatoryBillingFields: { country: true, state: false, city: true, postcode: true, street1: true, street2: false },
-        }
-      : { style: "plain" };
+    // Alleen kaartgegevens; naam, e-mail, telefoon en land sturen we server-side mee.
+    // (Mocht ACI toch een adres eisen: COPYandPAY-optie billingAddress + mandatoryBillingFields toont adresvelden in hetzelfde formulier.)
+    (window as any).wpwlOptions = { style: "plain" };
     const s = document.createElement("script");
     s.src = pay.scriptUrl; s.async = true;
     document.body.appendChild(s);
