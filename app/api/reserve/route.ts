@@ -4,6 +4,7 @@ import { reserveForExternalPayment, abortReserved, type BookingRequest } from ".
 import { tmtModalConfig } from "../../../lib/tmt";
 import { createCheckout, widgetScriptUrl } from "../../../lib/axcess";
 import { encodeOrder } from "../../../lib/order";
+import { cardProviderFor, visitorCountry } from "../../../lib/routing";
 import { env } from "../../../lib/env";
 
 /**
@@ -52,9 +53,14 @@ async function handle(req: Request) {
     { questionId: "phoneNumber", values: [customer.phone] },
   ];
 
-  // Kaart = TMT in channel-valuta (bijv. USD). iDEAL/wallets via AxcessMS: iDEAL kan alleen EUR.
-  const provider = method === "card" ? "tmt" : "axcess";
-  const currency = provider === "tmt" ? env("TMT_CURRENCY") : "EUR";
+  // Kaart: partij per land van de bezoeker (zie lib/routing.ts). iDEAL/wallets via ACI (AxcessMS).
+  // Kaarten in USD; iDEAL en wallets voorlopig in EUR.
+  const cardProvider = method === "card" ? cardProviderFor(visitorCountry(req)) : null;
+  if (cardProvider === "stripe") {
+    return NextResponse.json({ error: "Stripe is nog niet gekoppeld" }, { status: 501 });
+  }
+  const provider = cardProvider === "tmt" ? "tmt" : "axcess";
+  const currency = method === "card" ? env("TMT_CURRENCY") : "EUR";
 
   const { confirmationCode, raw } = await reserveForExternalPayment(booking, 0, currency);
 
@@ -95,7 +101,7 @@ async function handle(req: Request) {
       axcess: {
         checkoutId,
         scriptUrl: widgetScriptUrl(checkoutId),
-        brands: ({ ideal: "IDEAL", applepay: "APPLEPAY", googlepay: "GOOGLEPAY" } as Record<string, string>)[method],
+        brands: ({ card: "VISA MASTER", ideal: "IDEAL", applepay: "APPLEPAY", googlepay: "GOOGLEPAY" } as Record<string, string>)[method],
         shopperResultUrl: `${env("APP_BASE_URL")}/api/axcess/result?order=${encodeURIComponent(order)}`,
       },
     });

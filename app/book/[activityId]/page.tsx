@@ -88,7 +88,7 @@ export default function Book() {
     setMethod(m); setPayErr("");
     // Vorige reservering vrijgeven als de klant van betaalmethode wisselt.
     if (pay) { fetch("/api/abort", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: pay.order }) }).catch(() => {}); setPay(null); }
-    if (m === "card") return; // Repayd Server2Server volgt
+
     if (!info || !slot) return;
     setBusy(true); setPay(null);
     try {
@@ -273,7 +273,7 @@ export default function Book() {
                   ["ideal", "iDEAL | Wero", "Pay in EUR with your Dutch bank app"],
                   ["googlepay", "Google Pay", ""],
                   ["applepay", "Apple Pay", "Available in Safari on Apple devices"],
-                  ["card", "Cards · Visa, Mastercard, Amex", ""],
+                  ["card", "Cards · Visa, Mastercard", ""],
                 ] as [Method, string, string][]).map(([m, label, sub]) => (
                   <div key={m} className={"kac-pm" + (method === m ? " open" : "")}>
                     <button className="kac-pm-h" onClick={() => !busy && startPayment(m)} disabled={busy}>
@@ -282,10 +282,9 @@ export default function Book() {
                     </button>
                     {method === m && (
                       <div className="kac-pm-b">
-                        {m === "card" && <p className="kac-pm-off">Card payments are coming soon. Please choose another payment method.</p>}
-                        {m !== "card" && busy && <p className="kac-pm-off">Reserving your spot…</p>}
-                        {m !== "card" && payErr && <p className="kac-err">{payErr}</p>}
-                        {m !== "card" && pay && (
+                        {busy && <p className="kac-pm-off">Reserving your spot…</p>}
+                        {payErr && <p className="kac-err">{payErr}</p>}
+                        {pay && (
                           <>
                             <p style={{ margin: "0 0 8px" }}>Amount: <b>{money(pay.amount, pay.currency)}</b></p>
                             {m === "ideal" && <p className="kac-pm-off" style={{ margin: "0 0 4px" }}>You'll approve the payment in your banking app and return here automatically.</p>}

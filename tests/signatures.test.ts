@@ -67,3 +67,20 @@ describe("Order-token", () => {
     expect(() => decodeOrder(t)).toThrow(/verlopen/);
   });
 });
+
+import { cardProviderFor } from "../lib/routing";
+describe("Kaart-routering per land", () => {
+  it("standaard ACI, uitzondering per land", () => {
+    process.env.CARD_PROVIDER = "aci";
+    process.env.CARD_PROVIDER_BY_COUNTRY = "US:stripe, CA:stripe";
+    expect(cardProviderFor("US")).toBe("stripe");
+    expect(cardProviderFor("ca")).toBe("stripe");
+    expect(cardProviderFor("NL")).toBe("aci");
+    expect(cardProviderFor(null)).toBe("aci");
+  });
+  it("ongeldige waarden vallen terug op aci", () => {
+    process.env.CARD_PROVIDER = "foo";
+    process.env.CARD_PROVIDER_BY_COUNTRY = "US:bar";
+    expect(cardProviderFor("US")).toBe("aci");
+  });
+});
