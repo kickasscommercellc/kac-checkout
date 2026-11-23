@@ -10,8 +10,11 @@ import { env } from "../../../../lib/env";
  */
 export async function GET(req: Request) {
   const url = new URL(req.url);
+  let reason = "";
   const done = (status: string, code?: string) =>
-    NextResponse.redirect(`${env("APP_BASE_URL")}/checkout/done?status=${status}${code ? `&code=${code}` : ""}`);
+    NextResponse.redirect(
+      `${env("APP_BASE_URL")}/checkout/done?status=${status}${code ? `&code=${encodeURIComponent(code)}` : ""}${reason ? `&reason=${encodeURIComponent(reason)}` : ""}`,
+    );
 
   let order;
   try {
@@ -24,6 +27,8 @@ export async function GET(req: Request) {
 
   const payment = await getPaymentStatus(checkoutId);
   const outcome = classifyResultCode(payment?.result?.code ?? "");
+  reason = `${payment?.result?.code ?? "?"} ${payment?.result?.description ?? ""}`.trim();
+  console.log("AxcessMS resultaat", { checkoutId, outcome, reason, brand: payment?.paymentBrand, amount: payment?.amount, currency: payment?.currency });
 
   if (outcome === "pending") return done("pending", order.confirmationCode); // webhook rondt dit later af (fase d)
   if (outcome === "failed") {

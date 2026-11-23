@@ -8,14 +8,15 @@ const MESSAGES: Record<string, { en: string; nl: string }> = {
   error: { en: "Something went wrong.", nl: "Er ging iets mis." },
 };
 
-export default async function Done({ searchParams }: { searchParams: Promise<{ status?: string; code?: string }> }) {
-  const { status = "error", code } = await searchParams;
+export default async function Done({ searchParams }: { searchParams: Promise<{ status?: string; code?: string; reason?: string }> }) {
+  const { status = "error", code, reason } = await searchParams;
   const m = MESSAGES[status] ?? MESSAGES.error;
   return (
     <main style={{ padding: 32, maxWidth: 560, margin: "0 auto" }}>
       <h1>{m.en}</h1>
       <p>{m.nl}</p>
       {code && <p>Booking reference: <strong>{code}</strong></p>}
+      {reason && <p style={{ color: "#888", fontSize: 13 }}>Technische info: {reason}</p>}
     </main>
   );
 }
