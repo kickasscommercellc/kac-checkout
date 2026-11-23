@@ -29,6 +29,8 @@ export default function Book() {
   const [extraQty, setExtraQty] = useState<Record<number, number>>({}); // per-persoon: 0/1 (voor alle deelnemers), per-boeking: aantal
   const [showExtras, setShowExtras] = useState(false);
   const [c, setC] = useState({ email: "", firstname: "", surname: "", phone: "", country: "NL", terms: false });
+  const [addr, setAddr] = useState({ street: "", postcode: "", city: "", country: "" });
+  const addrOk = addr.street.trim().length > 1 && addr.postcode.trim() && addr.city.trim() && /^[A-Za-z]{2}$/.test(addr.country.trim());
   const [touched, setTouched] = useState(false);
   const [method, setMethod] = useState<Method | null>(null);
   const [pay, setPay] = useState<{ scriptUrl: string; brands: string; shopperResultUrl: string; amount: number; currency: string; expiresAt: number; order: string } | null>(null);
@@ -84,12 +86,13 @@ export default function Book() {
   const detailsOk = emailOk && phoneOk && c.firstname.trim() && c.surname.trim() && c.terms;
 
   async function startPayment(m: Method) {
-    if (m === method) return;
+    if (m === method && !(m === "card" && !pay)) return;
     setMethod(m); setPayErr("");
     // Vorige reservering vrijgeven als de klant van betaalmethode wisselt.
     if (pay) { fetch("/api/abort", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: pay.order }) }).catch(() => {}); setPay(null); }
 
     if (!info || !slot) return;
+    if (m === "card" && !addrOk) return; // eerst factuuradres invullen
     setBusy(true); setPay(null);
     try {
       // Extra's per deelnemer (Bókun: passengers[].extras met extraId + quantity — geverifieerd 23-11-2026;
@@ -103,7 +106,10 @@ export default function Book() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           method: m, travelDate: slot.date,
-          customer: { firstname: c.firstname.trim(), surname: c.surname.trim(), email: c.email.trim(), phone: c.phone.replace(/[\s-]/g, ""), country: c.country },
+          customer: {
+            firstname: c.firstname.trim(), surname: c.surname.trim(), email: c.email.trim(), phone: c.phone.replace(/[\s-]/g, ""), country: (addr.country || c.country).toUpperCase(),
+            ...(m === "card" ? { address: { street: addr.street.trim(), city: addr.city.trim(), postcode: addr.postcode.trim(), country: addr.country.trim().toUpperCase() } } : {}),
+          },
           booking: { mainContactDetails: [], activityBookings: [{ activityId: info.id, rateId: info.rateId, startTimeId: slot.startTimeId, date: slot.date, passengers }] },
         }),
       });
@@ -282,6 +288,18 @@ export default function Book() {
                     </button>
                     {method === m && (
                       <div className="kac-pm-b">
+                        {m === "card" && !pay && !busy && (
+                          <>
+                            <p className="kac-pm-off" style={{ margin: "0 0 4px" }}>Billing address (required by your card issuer)</p>
+                            <input className="kac-input" placeholder="Street and number" autoComplete="address-line1" value={addr.street} onChange={(e) => setAddr({ ...addr, street: e.target.value })} />
+                            <div className="kac-row" style={{ marginTop: 10 }}>
+                              <input className="kac-input" placeholder="Postcode" autoComplete="postal-code" value={addr.postcode} onChange={(e) => setAddr({ ...addr, postcode: e.target.value })} />
+                              <input className="kac-input" placeholder="City" autoComplete="address-level2" value={addr.city} onChange={(e) => setAddr({ ...addr, city: e.target.value })} />
+                            </div>
+                            <input className="kac-input" style={{ marginTop: 10 }} placeholder="Country code (e.g. US, NL)" maxLength={2} autoComplete="country" value={addr.country} onChange={(e) => setAddr({ ...addr, country: e.target.value.toUpperCase() })} />
+                            <button className="kac-btn" disabled={!addrOk} onClick={() => startPayment("card")}>Continue to card details</button>
+                          </>
+                        )}
                         {busy && <p className="kac-pm-off">Reserving your spot…</p>}
                         {payErr && <p className="kac-err">{payErr}</p>}
                         {pay && (

@@ -21,14 +21,35 @@ async function oppFetch(method: "GET" | "POST", path: string, form?: Record<stri
   return json;
 }
 
-export async function createCheckout(p: { amount: number; currency: string; merchantTransactionId: string }) {
-  const json = await oppFetch("POST", "/v1/checkouts", {
+export type OppCustomer = {
+  firstname: string; surname: string; email: string; phone?: string; country: string; ip?: string | null;
+  address?: { street: string; city: string; postcode: string; country: string };
+};
+
+export async function createCheckout(p: { amount: number; currency: string; merchantTransactionId: string; customer?: OppCustomer }) {
+  const form: Record<string, string> = {
     entityId: env("AXCESS_ENTITY_ID"),
     amount: p.amount.toFixed(2),
     currency: p.currency,
     paymentType: "DB",
     merchantTransactionId: p.merchantTransactionId,
-  });
+  };
+  // Klant- en adresgegevens (ACI weigert kaartbetalingen zonder: 200.100.504).
+  const c = p.customer;
+  if (c) {
+    form["customer.givenName"] = c.firstname;
+    form["customer.surname"] = c.surname;
+    form["customer.email"] = c.email;
+    if (c.phone) form["customer.mobile"] = c.phone;
+    if (c.ip) form["customer.ip"] = c.ip;
+    form["billing.country"] = (c.address?.country || c.country).toUpperCase();
+    if (c.address) {
+      form["billing.street1"] = c.address.street;
+      form["billing.city"] = c.address.city;
+      form["billing.postcode"] = c.address.postcode;
+    }
+  }
+  const json = await oppFetch("POST", "/v1/checkouts", form);
   if (!json?.id) throw new Error("AxcessMS checkout mislukt: " + JSON.stringify(json?.result ?? json));
   return { checkoutId: json.id as string };
 }

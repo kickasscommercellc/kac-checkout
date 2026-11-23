@@ -20,6 +20,7 @@ const Body = z.object({
     email: z.string().email(),
     country: z.string().length(2),
     phone: z.string().min(6), // Bókun vereist een geldig telefoonnummer (bijv. +31612345678)
+    address: z.object({ street: z.string().min(2), city: z.string().min(1), postcode: z.string().min(1), country: z.string().length(2) }).optional(),
   }),
   travelDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
@@ -37,6 +38,9 @@ async function handle(req: Request) {
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const { method, booking, customer, travelDate } = parsed.data;
+  if (method === "card" && !customer.address) {
+    return NextResponse.json({ error: "Billing address is required for card payments" }, { status: 400 });
+  }
 
   // Tweede slot: Bókun dwingt het Distribution Filter NIET af via de API (getest 23-11-2026).
   // Daarom staan per aanbieder alleen expliciet toegestane producten toe.
@@ -92,7 +96,8 @@ async function handle(req: Request) {
       });
     }
 
-    const { checkoutId } = await createCheckout({ amount, currency, merchantTransactionId: confirmationCode });
+    const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || null;
+    const { checkoutId } = await createCheckout({ amount, currency, merchantTransactionId: confirmationCode, customer: { ...customer, ip } });
     return NextResponse.json({
       provider,
       order,
