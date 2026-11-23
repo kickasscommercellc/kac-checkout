@@ -27,7 +27,10 @@ export async function GET(req: Request) {
 
   const payment = await getPaymentStatus(checkoutId);
   const outcome = classifyResultCode(payment?.result?.code ?? "");
-  reason = `${payment?.result?.code ?? "?"} ${payment?.result?.description ?? ""}`.trim();
+  const paramErrors = Array.isArray(payment?.result?.parameterErrors)
+    ? " [" + payment.result.parameterErrors.map((e: any) => `${e.name}: ${e.message}`).join("; ") + "]"
+    : "";
+  reason = `${payment?.result?.code ?? "?"} ${payment?.result?.description ?? ""}${paramErrors}`.trim();
   console.log("AxcessMS resultaat", { checkoutId, outcome, reason, brand: payment?.paymentBrand, amount: payment?.amount, currency: payment?.currency });
 
   if (outcome === "pending") return done("pending", order.confirmationCode); // webhook rondt dit later af (fase d)
