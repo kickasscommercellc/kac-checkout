@@ -27,7 +27,7 @@ export default function Book() {
   const [c, setC] = useState({ email: "", firstname: "", surname: "", phone: "", country: "NL", terms: false });
   const [touched, setTouched] = useState(false);
   const [method, setMethod] = useState<Method | null>(null);
-  const [pay, setPay] = useState<{ scriptUrl: string; brands: string; shopperResultUrl: string; amount: number; currency: string; expiresAt: number } | null>(null);
+  const [pay, setPay] = useState<{ scriptUrl: string; brands: string; shopperResultUrl: string; amount: number; currency: string; expiresAt: number; order: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [payErr, setPayErr] = useState("");
   const [now, setNow] = useState(Date.now());
@@ -68,7 +68,10 @@ export default function Book() {
   const detailsOk = emailOk && phoneOk && c.firstname.trim() && c.surname.trim() && c.terms;
 
   async function startPayment(m: Method) {
+    if (m === method) return;
     setMethod(m); setPayErr("");
+    // Vorige reservering vrijgeven als de klant van betaalmethode wisselt.
+    if (pay) { fetch("/api/abort", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: pay.order }) }).catch(() => {}); setPay(null); }
     if (m === "card") return; // Repayd Server2Server volgt
     if (!info || !slot) return;
     setBusy(true); setPay(null);
@@ -84,7 +87,7 @@ export default function Book() {
       });
       const j = await res.json();
       if (!res.ok) throw new Error(typeof j.error === "string" ? j.error : "Reserveren mislukt");
-      setPay({ ...j.axcess, amount: j.amount, currency: j.currency, expiresAt: Date.now() + 28 * 60 * 1000 });
+      setPay({ ...j.axcess, amount: j.amount, currency: j.currency, order: j.order, expiresAt: Date.now() + 28 * 60 * 1000 });
     } catch (e: any) {
       setPayErr(e.message || "Er ging iets mis. Probeer het opnieuw.");
     } finally { setBusy(false); }
