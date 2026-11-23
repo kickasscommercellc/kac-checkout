@@ -24,6 +24,15 @@ const Body = z.object({
 });
 
 export async function POST(req: Request) {
+  try {
+    return await handle(req);
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 });
+  }
+}
+
+async function handle(req: Request) {
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const { method, booking, customer, travelDate } = parsed.data;
@@ -54,6 +63,8 @@ export async function POST(req: Request) {
     const b = raw?.booking ?? raw;
     const amount = Number(b?.totalPrice);
     if (!Number.isFinite(amount) || amount <= 0) throw new Error("Geen totaalbedrag in Bókun-response");
+    // Bókun valt terug op de standaardvaluta als de gevraagde valuta niet op het channel staat.
+    if (b?.currency && b.currency !== currency) throw new Error(`Bókun gaf ${b.currency} i.p.v. ${currency}: zet ${currency} aan op het booking channel`);
 
     const order = encodeOrder({
       confirmationCode,

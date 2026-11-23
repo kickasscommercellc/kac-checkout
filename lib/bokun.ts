@@ -69,6 +69,14 @@ export interface BookingRequest {
   promoCode?: string;
 }
 
+export function getActivity(id: number) {
+  return bokunFetch<Record<string, unknown>>("GET", `/activity.json/${id}?currency=USD&lang=EN`);
+}
+
+export function getAvailability(id: number, start: string, end: string) {
+  return bokunFetch<unknown[]>("GET", `/activity.json/${id}/availabilities?start=${start}&end=${end}&currency=USD&lang=EN`);
+}
+
 /** Stap 0: welke checkout-opties/betaalmethodes zijn toegestaan + vragen die beantwoord moeten worden. */
 export function getCheckoutOptions(request: BookingRequest, currency: string) {
   return bokunFetch<Record<string, unknown>>(
