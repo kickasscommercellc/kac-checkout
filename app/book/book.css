@@ -116,3 +116,6 @@
 
 /* Card form: brand is detected from the card number, no dropdown needed */
 .kac .wpwl-group-brand { display: none !important; }
+
+/* Back link in card header */
+.kac .kac-back { background: none; border: 0; padding: 0 0 6px; font: inherit; font-size: 14px; color: var(--brand-dark, #1d5b6b); cursor: pointer; display: block; }

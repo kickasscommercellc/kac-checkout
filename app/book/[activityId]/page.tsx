@@ -106,6 +106,12 @@ export default function Book() {
   const phoneOk = /^\+\d{7,15}$/.test(c.phone.replace(/[\s-]/g, ""));
   const detailsOk = emailOk && phoneOk && c.firstname.trim() && c.surname.trim() && c.terms;
 
+  // Terug vanuit betalen: lopende reservering vrijgeven en betaalkeuze resetten.
+  function goBack(to: number) {
+    if (pay) { fetch("/api/abort", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ order: pay.order }) }).catch(() => {}); setPay(null); }
+    setMethod(null); setPayErr(""); setStep(to);
+  }
+
   async function startPayment(m: Method) {
     if (m === method) return; // kaart: straat + land zitten in het ACI-kaartformulier zelf; iDEAL: geen adres
     setMethod(m); setPayErr("");
@@ -161,7 +167,7 @@ export default function Book() {
         {slot && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span>{new Date(slot.date + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}, {slot.startTime} · {paxCount} {paxCount === 1 ? "person" : "people"}</span>
-            {step > 0 && !pay && <button className="kac-link" onClick={() => { setStep(0); setMethod(null); }} aria-label="Edit">✎</button>}
+            {step > 0 && <button className="kac-link" onClick={() => goBack(0)} aria-label="Edit">✎</button>}
           </div>
         )}
         {lines(shownCur).map((l) => <div className="kac-line" key={l.title}><span>{l.n} × {l.title}</span><span>{money(l.sum, shownCur)}</span></div>)}
@@ -248,7 +254,7 @@ export default function Book() {
 
           {step === 1 && (
             <>
-              <div className="kac-head"><h2>Your details</h2></div>
+              <div className="kac-head"><button className="kac-back" onClick={() => setStep(0)}>‹ Back</button><h2>Your details</h2></div>
               <div className="kac-body">
                 {Steps}
                 <label className="kac-label" htmlFor="em">Email</label>
@@ -306,7 +312,7 @@ export default function Book() {
 
           {step === 2 && (
             <>
-              <div className="kac-head"><h2>Pay</h2></div>
+              <div className="kac-head"><button className="kac-back" onClick={() => goBack(1)}>‹ Back</button><h2>Pay</h2></div>
               <div className="kac-body">
                 {Steps}
                 {([
@@ -337,7 +343,7 @@ export default function Book() {
                   </div>
                 ))}
                 <p className="kac-trust">🔒 Secure payment. You book directly with the activity provider via Kick Ass Commerce.</p>
-                {!pay && <button className="kac-link" onClick={() => setStep(1)}>‹ Back</button>}
+                <button className="kac-link" onClick={() => goBack(1)}>‹ Back to your details</button>
               </div>
             </>
           )}
