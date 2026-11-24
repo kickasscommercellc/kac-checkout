@@ -59,6 +59,8 @@ export default function Book() {
     (window as any).wpwlOptions = method === "card"
       ? {
           style: "plain",
+          brandDetection: true,
+          brandDetectionType: "binlist",
           billingAddress: { country: (c.country || "").toUpperCase() },
           mandatoryBillingFields: { country: true, state: false, city: false, postcode: false, street1: true, street2: false },
           onReady: () => {
