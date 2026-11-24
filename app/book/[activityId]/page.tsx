@@ -194,7 +194,7 @@ export default function Book() {
 
   const Steps = (
     <div className="kac-steps">
-      {["Details", "Pay", "Confirmed"].map((t, i) => (
+      {["Details", "Payment", "Confirmed"].map((t, i) => (
         <div key={t} className={"kac-step" + (step === i + 1 ? " on" : step > i + 1 ? " done" : "")}><b>{i + 1}</b>{t}</div>
       ))}
     </div>
@@ -312,7 +312,7 @@ export default function Book() {
 
           {step === 2 && (
             <>
-              <div className="kac-head"><button className="kac-back" aria-label="Back" onClick={() => goBack(1)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><h2>Pay</h2></div>
+              <div className="kac-head"><button className="kac-back" aria-label="Back" onClick={() => goBack(1)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><h2>Choose how to pay</h2></div>
               <div className="kac-body">
                 {Steps}
                 {([
