@@ -254,7 +254,7 @@ export default function Book() {
 
           {step === 1 && (
             <>
-              <div className="kac-head"><button className="kac-back" onClick={() => setStep(0)}>‹ Back</button><h2>Your details</h2></div>
+              <div className="kac-head"><button className="kac-back" aria-label="Back" onClick={() => setStep(0)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><h2>Your details</h2></div>
               <div className="kac-body">
                 {Steps}
                 <label className="kac-label" htmlFor="em">Email</label>
@@ -312,7 +312,7 @@ export default function Book() {
 
           {step === 2 && (
             <>
-              <div className="kac-head"><button className="kac-back" onClick={() => goBack(1)}>‹ Back</button><h2>Pay</h2></div>
+              <div className="kac-head"><button className="kac-back" aria-label="Back" onClick={() => goBack(1)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><h2>Pay</h2></div>
               <div className="kac-body">
                 {Steps}
                 {([
