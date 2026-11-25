@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { confirmReserved, abortReserved } from "../../../../lib/bokun";
 import { getPaymentStatus, classifyResultCode } from "../../../../lib/axcess";
 import { decodeOrder } from "../../../../lib/order";
-import { env } from "../../../../lib/env";
+import { baseUrl } from "../../../../lib/baseurl";
 
 /**
  * shopperResultUrl: hier komt de klant terug na iDEAL / Apple Pay / Google Pay.
@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   let reason = "";
   const done = (status: string, code?: string) =>
     NextResponse.redirect(
-      `${env("APP_BASE_URL")}/checkout/done?status=${status}${code ? `&code=${encodeURIComponent(code)}` : ""}${reason ? `&reason=${encodeURIComponent(reason)}` : ""}`,
+      `${baseUrl(req)}/checkout/done?status=${status}${code ? `&code=${encodeURIComponent(code)}` : ""}${reason ? `&reason=${encodeURIComponent(reason)}` : ""}`,
     );
 
   let order;

@@ -5,6 +5,7 @@ import { tmtModalConfig } from "../../../lib/tmt";
 import { createCheckout, widgetScriptUrl } from "../../../lib/axcess";
 import { encodeOrder } from "../../../lib/order";
 import { cardProviderFor, visitorCountry } from "../../../lib/routing";
+import { baseUrl } from "../../../lib/baseurl";
 import { env } from "../../../lib/env";
 
 /**
@@ -106,7 +107,7 @@ async function handle(req: Request) {
         // Google Pay: entity-ID gaat als gatewayMerchantId naar Google (niet geheim, staat ook in de widget).
         entityId: method === "googlepay" ? env("AXCESS_ENTITY_ID") : undefined,
         brands: ({ card: "VISA MASTER DISCOVER DINERS", ideal: "IDEAL_VA", applepay: "APPLEPAY", googlepay: "GOOGLEPAY" } as Record<string, string>)[method],
-        shopperResultUrl: `${env("APP_BASE_URL")}/api/axcess/result?order=${encodeURIComponent(order)}`,
+        shopperResultUrl: `${baseUrl(req)}/api/axcess/result?order=${encodeURIComponent(order)}`,
       },
     });
   } catch (err) {
