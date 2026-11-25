@@ -32,7 +32,7 @@ export default function Book() {
   const [c, setC] = useState({ email: "", firstname: "", surname: "", phone: "", country: "NL", terms: false });
   const [touched, setTouched] = useState(false);
   const [method, setMethod] = useState<Method | null>(null);
-  const [pay, setPay] = useState<{ scriptUrl: string; brands: string; shopperResultUrl: string; amount: number; currency: string; expiresAt: number; order: string } | null>(null);
+  const [pay, setPay] = useState<{ scriptUrl: string; brands: string; shopperResultUrl: string; amount: number; currency: string; expiresAt: number; order: string; entityId?: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [payErr, setPayErr] = useState("");
   const [now, setNow] = useState(Date.now());
@@ -71,6 +71,18 @@ export default function Book() {
                 (g ?? (el as HTMLElement)).style.display = "none";
               });
             });
+          },
+        }
+      : method === "googlepay"
+      ? {
+          style: "plain",
+          // Google Pay wordt volledig in ons verzoek geconfigureerd (bevestigd door AxcessMS 25-11-2026).
+          // merchantId is pas nodig voor live (na goedkeuring door Google).
+          googlePay: {
+            gatewayMerchantId: pay.entityId,
+            merchantName: "Kick Ass Commerce",
+            allowedAuthMethods: ["PAN_ONLY", "CRYPTOGRAM_3DS"],
+            allowedCardNetworks: ["VISA", "MASTERCARD"],
           },
         }
       : { style: "plain" };

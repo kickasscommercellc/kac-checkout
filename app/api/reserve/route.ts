@@ -103,6 +103,8 @@ async function handle(req: Request) {
       axcess: {
         checkoutId,
         scriptUrl: widgetScriptUrl(checkoutId),
+        // Google Pay: entity-ID gaat als gatewayMerchantId naar Google (niet geheim, staat ook in de widget).
+        entityId: method === "googlepay" ? env("AXCESS_ENTITY_ID") : undefined,
         brands: ({ card: "VISA MASTER", ideal: "IDEAL_VA", applepay: "APPLEPAY", googlepay: "GOOGLEPAY" } as Record<string, string>)[method],
         shopperResultUrl: `${env("APP_BASE_URL")}/api/axcess/result?order=${encodeURIComponent(order)}`,
       },
