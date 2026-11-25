@@ -24,6 +24,18 @@ const Body = z.object({
     address: z.object({ street: z.string().min(2), city: z.string().optional().default(""), postcode: z.string().optional().default(""), country: z.string().length(2) }).optional(),
   }),
   travelDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  // Alleen voor de bevestigingspagina; bedragen komen nooit hieruit.
+  display: z
+    .object({
+      title: z.string().max(200),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      startTime: z.string().max(10).optional(),
+      pax: z.number().int().min(1).max(500).optional(),
+      durationMin: z.number().int().min(1).max(60 * 24 * 30).optional(),
+      meeting: z.object({ name: z.string().max(200).optional(), address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional() }).nullable().optional(),
+      email: z.string().max(200).optional(),
+    })
+    .optional(),
 });
 
 export async function POST(req: Request) {
@@ -38,7 +50,7 @@ export async function POST(req: Request) {
 async function handle(req: Request) {
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  const { method, booking, customer, travelDate } = parsed.data;
+  const { method, booking, customer, travelDate, display } = parsed.data;
 
   // Tweede slot: Bókun dwingt het Distribution Filter NIET af via de API (getest 23-11-2026).
   // Daarom staan per aanbieder alleen expliciet toegestane producten toe.
@@ -81,6 +93,7 @@ async function handle(req: Request) {
       provider,
       vendor: env("VENDOR_ID"),
       expiresAt: Date.now() + 28 * 60 * 1000, // marge onder Bókun's 30 min
+      d: display,
     });
 
     if (provider === "tmt") {

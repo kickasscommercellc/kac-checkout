@@ -13,6 +13,18 @@ export interface Order {
   provider: "tmt" | "axcess";
   vendor: string; // aanbieder, voor reconciliatie
   expiresAt: number; // ms; Bókun houdt de plek max. 30 min vast
+  d?: Display; // alleen voor de bevestigingspagina
+}
+
+/** Weergavegegevens voor de bevestigingspagina (geen betaalgegevens). */
+export interface Display {
+  title: string;
+  date: string; // YYYY-MM-DD
+  startTime?: string; // HH:mm
+  pax?: number;
+  durationMin?: number;
+  meeting?: { name?: string; address?: string; lat?: number; lng?: number } | null;
+  email?: string;
 }
 
 const sign = (data: string) => createHmac("sha256", env("ORDER_SIGNING_SECRET")).update(data).digest("base64url");
@@ -20,6 +32,20 @@ const sign = (data: string) => createHmac("sha256", env("ORDER_SIGNING_SECRET"))
 export function encodeOrder(o: Order): string {
   const data = Buffer.from(JSON.stringify(o)).toString("base64url");
   return `${data}.${sign(data)}`;
+}
+
+/** Voor de bevestigingspagina: handtekening controleren, verlooptijd niet (klant kan later terugkomen). */
+export function readOrderForDisplay(token: string): Order | null {
+  try {
+    const [data, sig] = token.split(".");
+    if (!data || !sig) return null;
+    const expected = Buffer.from(sign(data));
+    const given = Buffer.from(sig);
+    if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
+    return JSON.parse(Buffer.from(data, "base64url").toString()) as Order;
+  } catch {
+    return null;
+  }
 }
 
 export function decodeOrder(token: string): Order {

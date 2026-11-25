@@ -64,6 +64,8 @@ export async function GET(req: Request) {
       excerpt: a.excerpt,
       photo: a.keyPhoto?.derived?.find((d: any) => d.name === "large")?.url || a.keyPhoto?.originalUrl || null,
       durationText: a.durationText,
+      durationMin: (a.durationDays || 0) * 1440 + (a.durationHours || 0) * 60 + (a.durationMinutes || 0) || null,
+      meetingPoint: meetingPoint(a),
       cancellationPolicy: a.rates?.[0]?.cancellationPolicy?.title ?? null,
       cancellationRules: policyRules(a.rates?.find((r: any) => r.id === rateId)?.cancellationPolicy ?? a.rates?.[0]?.cancellationPolicy),
       termsUrl: process.env.TERMS_URL || "https://www.kickasscommerce.com/terms-conditions",
@@ -106,4 +108,15 @@ function policyRules(p: any): string[] {
     if (maxH > 0) out.unshift(`Free cancellation up to ${maxH % 24 === 0 ? `${maxH / 24} day${maxH === 24 ? "" : "s"}` : `${maxH} hours`} before the start.`);
   }
   return out;
+}
+
+/** Vertrekpunt uit Bókun (startPoints of googlePlace), voor routebeschrijving op de bevestigingspagina. */
+function meetingPoint(a: any) {
+  const sp = a.startPoints?.[0];
+  const adr = sp?.address;
+  const address = adr ? [adr.addressLine1, adr.addressLine2, adr.city, adr.countryCode].filter(Boolean).join(", ") : undefined;
+  const geo = adr?.geoPoint || sp?.geoPoint || a.googlePlace?.geoLocationCenter || null;
+  const name = sp?.title || a.googlePlace?.name || undefined;
+  if (!name && !address && !geo) return null;
+  return { name, address, lat: geo?.latitude ?? geo?.lat, lng: geo?.longitude ?? geo?.lng };
 }

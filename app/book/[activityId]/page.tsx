@@ -11,7 +11,7 @@ import { useParams } from "next/navigation";
 type ExtraPrice = Record<number, { perCategory: Record<number, number>; perUnit: number | null }>;
 type Slot = { date: string; startTime: string; startTimeId: number; available: number; prices: { USD: Record<number, number>; EUR: Record<number, number> }; extraPrices: { USD: ExtraPrice; EUR: ExtraPrice } };
 type Extra = { id: number; title: string; information: string; perPerson: boolean; maxPerBooking: number; included: boolean; required: boolean };
-type Info = { visitorCountry?: string | null; id: number; title: string; excerpt?: string; photo: string | null; durationText?: string; cancellationPolicy: string | null; cancellationRules?: string[]; termsUrl?: string; privacyUrl?: string; rateId: number; extras: Extra[]; categories: { id: number; title: string; isDefault: boolean }[]; slots: Slot[] };
+type Info = { visitorCountry?: string | null; id: number; title: string; excerpt?: string; photo: string | null; durationText?: string; durationMin?: number | null; meetingPoint?: { name?: string; address?: string; lat?: number; lng?: number } | null; cancellationPolicy: string | null; cancellationRules?: string[]; termsUrl?: string; privacyUrl?: string; rateId: number; extras: Extra[]; categories: { id: number; title: string; isDefault: boolean }[]; slots: Slot[] };
 type Method = "ideal" | "googlepay" | "applepay" | "card";
 
 const money = (n: number, cur: string) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur }).format(n);
@@ -151,6 +151,7 @@ export default function Book() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           method: m, travelDate: slot.date,
+          display: { title: info.title, date: slot.date, startTime: slot.startTime, pax: paxCount, durationMin: info.durationMin ?? undefined, meeting: info.meetingPoint ?? null, email: c.email.trim() },
           customer: {
             firstname: c.firstname.trim(), surname: c.surname.trim(), email: c.email.trim(), phone: c.phone.replace(/[\s-]/g, ""), country: (c.country || "NL").toUpperCase(),
 

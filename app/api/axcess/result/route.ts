@@ -11,9 +11,10 @@ import { baseUrl } from "../../../../lib/baseurl";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   let reason = "";
+  const token = url.searchParams.get("order") ?? "";
   const done = (status: string, code?: string) =>
     NextResponse.redirect(
-      `${baseUrl(req)}/checkout/done?status=${status}${code ? `&code=${encodeURIComponent(code)}` : ""}${reason ? `&reason=${encodeURIComponent(reason)}` : ""}`,
+      `${baseUrl(req)}/checkout/done?status=${status}${code ? `&code=${encodeURIComponent(code)}&t=${encodeURIComponent(token)}` : ""}${reason && !["success", "review"].includes(status) ? `&reason=${encodeURIComponent(reason)}` : ""}`,
     );
 
   let order;
