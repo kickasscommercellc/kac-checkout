@@ -68,8 +68,8 @@ export default function Book() {
             ["billing.state", "billing.city", "billing.postcode", "billing.street2"].forEach((n) => {
               document.querySelectorAll(`[name="${n}"]`).forEach((el) => {
                 // Alleen het eigen veld verbergen, niet de hele adresgroep (daar zitten straat + land ook in).
-                const w = ((el as HTMLElement).closest('[class*="wpwl-wrapper"]') as HTMLElement | null) ?? (el as HTMLElement);
-                w.style.display = "none";
+                // Alleen het invoerveld zelf verbergen; wrappers kunnen meerdere adresvelden bevatten.
+                (el as HTMLElement).style.display = "none";
                 const id = (el as HTMLElement).id;
                 if (id) document.querySelectorAll(`label[for="${id}"]`).forEach((l) => ((l as HTMLElement).style.display = "none"));
               });
