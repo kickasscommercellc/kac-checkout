@@ -102,11 +102,6 @@
 .kac [class*="wpwl-form-onlineTransfer-IDEAL"] .wpwl-button-brand::after { content: "Continue to iDEAL | Wero"; }
 .kac [class*="wpwl-form-onlineTransfer-IDEAL"] .wpwl-button-brand:hover { filter: brightness(1.08); }
 
-/* Card form: hide billing fields we don't need (street + country stay) */
-.kac .wpwl-group:has([name="billing.state"]),
-.kac .wpwl-group:has([name="billing.city"]),
-.kac .wpwl-group:has([name="billing.postcode"]),
-.kac .wpwl-group:has([name="billing.street2"]) { display: none !important; }
 
 /* Links in terms line + cancellation policy popup */
 .kac .kac-a { color: var(--brand-dark); text-decoration: underline; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
