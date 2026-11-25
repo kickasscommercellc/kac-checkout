@@ -82,7 +82,7 @@ export default function Book() {
             gatewayMerchantId: pay.entityId,
             merchantName: "Kick Ass Commerce",
             allowedAuthMethods: ["PAN_ONLY", "CRYPTOGRAM_3DS"],
-            allowedCardNetworks: ["VISA", "MASTERCARD"],
+            allowedCardNetworks: ["VISA", "MASTERCARD", "DISCOVER"],
           },
         }
       : { style: "plain" };
@@ -331,7 +331,7 @@ export default function Book() {
                   ["ideal", "iDEAL | Wero", "Pay in EUR with your Dutch bank app"],
                   ["googlepay", "Google Pay", ""],
                   ["applepay", "Apple Pay", "Available in Safari on Apple devices"],
-                  ["card", "Cards · Visa, Mastercard", ""],
+                  ["card", "Cards · Visa, Mastercard, Discover, Diners", ""],
                 ] as [Method, string, string][]).map(([m, label, sub]) => (
                   <div key={m} className={"kac-pm" + (method === m ? " open" : "")}>
                     <button className="kac-pm-h" onClick={() => !busy && startPayment(m)} disabled={busy}>
