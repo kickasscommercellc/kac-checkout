@@ -36,6 +36,9 @@ export default function Book() {
   const [busy, setBusy] = useState(false);
   const [payErr, setPayErr] = useState("");
   const [now, setNow] = useState(Date.now());
+  const [canApplePay, setCanApplePay] = useState(false);
+  const [showSum, setShowSum] = useState(false);
+  useEffect(() => { try { setCanApplePay(!!(window as any).ApplePaySession && (window as any).ApplePaySession.canMakePayments()); } catch {} }, []);
 
   useEffect(() => {
     fetch(`/api/availability?activityId=${activityId}`)
@@ -182,13 +185,15 @@ export default function Book() {
         {slot && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span>{new Date(slot.date + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}, {slot.startTime} · {paxCount} {paxCount === 1 ? "person" : "people"}</span>
-            {step > 0 && <button className="kac-link" onClick={() => goBack(0)} aria-label="Edit">✎</button>}
           </div>
         )}
+        {slot && step > 0 && <button className="kac-link" style={{ fontSize: 14, margin: "2px 0 6px" }} onClick={() => goBack(0)}>Change date or time</button>}
         {lines(shownCur).map((l) => <div className="kac-line" key={l.title}><span>{l.n} × {l.title}</span><span>{money(l.sum, shownCur)}</span></div>)}
         {extraLines(shownCur).map((l) => <div className="kac-line" key={"x" + l.title}><span>{l.n} × {l.title}</span><span>{money(l.sum, shownCur)}</span></div>)}
         {(info.extras ?? []).filter((e) => e.included).map((e) => <div className="kac-line" key={"i" + e.id}><span>{e.title}</span><span>Included</span></div>)}
+        <div className="kac-line"><span>Taxes and fees</span><span>Included</span></div>
         <div className="kac-total"><span>Total</span><span>{money(pay ? pay.amount : total(shownCur), pay ? pay.currency : shownCur)}</span></div>
+        {pay && <div className="kac-timer">Your spot is held for {Math.max(0, Math.round((pay.expiresAt - now) / 60000))} more minutes.</div>}
         {info.cancellationPolicy && <button type="button" className="kac-hint kac-a" style={{ marginTop: 8, textAlign: "left" }} onClick={() => setShowPolicy(true)}>{info.cancellationPolicy} · details</button>}
         {showPolicy && (
           <div className="kac-modal" role="dialog" aria-modal="true" onClick={() => setShowPolicy(false)}>
@@ -207,6 +212,13 @@ export default function Book() {
     </aside>
   );
 
+  const MiniSum = slot && step > 0 ? (
+    <button type="button" className="kac-mini" onClick={() => setShowSum(!showSum)} aria-expanded={showSum}>
+      <span><b>{info.title}</b><small>{new Date(slot.date + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })} · {slot.startTime} · {paxCount} {paxCount === 1 ? "person" : "people"}</small></span>
+      <span className="kac-mini-r">{money(pay ? pay.amount : total(shownCur), pay ? pay.currency : shownCur)} {showSum ? "▴" : "▾"}</span>
+    </button>
+  ) : null;
+
   const Steps = (
     <div className="kac-steps">
       {["Details", "Payment", "Confirmed"].map((t, i) => (
@@ -221,9 +233,14 @@ export default function Book() {
         <section className="kac-card">
           {step === 0 && (
             <>
-              <div className="kac-head"><h1>Book an activity</h1></div>
+              <div className="kac-head"><h1>{info.title}</h1></div>
               <div className="kac-body">
-                <div style={{ fontSize: 14, color: "var(--muted)" }}>Total for {paxCount} {paxCount === 1 ? "person" : "people"}</div>
+                <div className="kac-chips">
+                  {info.durationText && <span className="kac-chip">{info.durationText}</span>}
+                  {info.cancellationPolicy && <button type="button" className="kac-chip" onClick={() => setShowPolicy(true)}>{info.cancellationPolicy}</button>}
+                  <span className="kac-chip">All fees included</span>
+                </div>
+                <div style={{ fontSize: 14, color: "var(--muted)", marginTop: 14 }}>Total for {paxCount} {paxCount === 1 ? "person" : "people"}</div>
                 <div style={{ fontSize: 28, fontWeight: 700 }}>{money(total("USD"), "USD")}</div>
 
                 <span className="kac-label">People</span>
@@ -238,6 +255,15 @@ export default function Book() {
                   </div>
                 ))}
 
+                <span className="kac-label">Date</span>
+                <div className="kac-quick">
+                  {[...dates].slice(0, 6).map((d) => {
+                    const dt = new Date(d + "T12:00:00Z");
+                    return <button key={d} className={"kac-qd" + (d === date ? " sel" : "")} onClick={() => { const ds = info.slots.filter((s) => s.date === d); setDate(d); setMonth(d.slice(0, 7)); setSlotId(ds.length === 1 ? ds[0].startTimeId : null); }}>
+                      <small>{dt.toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" })}</small><b>{dt.getUTCDate()}</b><small>{dt.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" })}</small>
+                    </button>;
+                  })}
+                </div>
                 <div className="kac-cal-nav">
                   <button disabled={mIdx <= 0} onClick={() => setMonth(months[mIdx - 1])} aria-label="Previous month">‹</button>
                   <span>{first.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" })}</span>
@@ -271,6 +297,7 @@ export default function Book() {
             <>
               <div className="kac-head"><button className="kac-back" aria-label="Back" onClick={() => setStep(0)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><h2>Your details</h2></div>
               <div className="kac-body">
+                {MiniSum}
                 {Steps}
                 <label className="kac-label" htmlFor="em">Email</label>
                 <input id="em" className="kac-input" type="email" autoComplete="email" value={c.email} onChange={(e) => setC({ ...c, email: e.target.value })} />
@@ -284,30 +311,26 @@ export default function Book() {
                 <input id="ph" className="kac-input" type="tel" autoComplete="tel" placeholder="+31 6 12345678" value={c.phone} onChange={(e) => setC({ ...c, phone: e.target.value })} />
                 {touched && !phoneOk && <div className="kac-err">Please enter your phone number including country code, e.g. +31…</div>}
                 {(info.extras ?? []).some((e) => !e.included) && (
-                  <div className="kac-pm" style={{ marginTop: 18 }}>
-                    <button className="kac-pm-h" onClick={() => setShowExtras(!showExtras)}>
-                      <span>Add extras <span className="kac-pm-off">({(info.extras ?? []).filter((e) => !e.included).length})</span></span>
-                      <span>{showExtras ? "▾" : "›"}</span>
-                    </button>
-                    {showExtras && (
-                      <div className="kac-pm-b">
-                        {(info.extras ?? []).filter((e) => !e.included).map((e) => (
-                          <div className="kac-pax" key={e.id}>
-                            <div>{e.title}<small>+{money(extraUnitPrice(e, "USD"), "USD")} {e.perPerson ? "per person" : "each"}</small>{e.information && <small>{e.information}</small>}</div>
-                            {e.perPerson ? (
-                              <input type="checkbox" aria-label={`Add ${e.title}`} style={{ width: 22, height: 22 }} checked={(extraQty[e.id] || 0) > 0} onChange={(ev) => setExtraQty({ ...extraQty, [e.id]: ev.target.checked ? 1 : 0 })} />
-                            ) : (
-                              <div className="kac-stepper">
-                                <button aria-label={`Fewer ${e.title}`} disabled={!extraQty[e.id]} onClick={() => setExtraQty({ ...extraQty, [e.id]: Math.max(0, (extraQty[e.id] || 0) - 1) })}>−</button>
-                                <span>{extraQty[e.id] || 0}</span>
-                                <button aria-label={`More ${e.title}`} disabled={!!e.maxPerBooking && (extraQty[e.id] || 0) >= e.maxPerBooking} onClick={() => setExtraQty({ ...extraQty, [e.id]: (extraQty[e.id] || 0) + 1 })}>+</button>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <>
+                    <span className="kac-label" style={{ marginTop: 22 }}>Make it even better</span>
+                    {(info.extras ?? []).filter((e) => !e.included).map((e) => {
+                      const on = (extraQty[e.id] || 0) > 0;
+                      return (
+                        <div className={"kac-extra" + (on ? " on" : "")} key={e.id}>
+                          <div style={{ flex: 1 }}><b>{e.title}</b><small>+{money(extraUnitPrice(e, "USD"), "USD")} {e.perPerson ? "per person" : "each"}</small>{e.information && <small>{e.information}</small>}</div>
+                          {e.perPerson || (e.maxPerBooking === 1) ? (
+                            <button type="button" className={"kac-add" + (on ? " on" : "")} onClick={() => setExtraQty({ ...extraQty, [e.id]: on ? 0 : 1 })}>{on ? "✓ Added" : "Add"}</button>
+                          ) : (
+                            <div className="kac-stepper">
+                              <button aria-label={`Fewer ${e.title}`} disabled={!extraQty[e.id]} onClick={() => setExtraQty({ ...extraQty, [e.id]: Math.max(0, (extraQty[e.id] || 0) - 1) })}>−</button>
+                              <span>{extraQty[e.id] || 0}</span>
+                              <button aria-label={`More ${e.title}`} disabled={!!e.maxPerBooking && (extraQty[e.id] || 0) >= e.maxPerBooking} onClick={() => setExtraQty({ ...extraQty, [e.id]: (extraQty[e.id] || 0) + 1 })}>+</button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </>
                 )}
                 <label style={{ display: "flex", gap: 10, marginTop: 18, alignItems: "flex-start" }}>
                   <input type="checkbox" checked={c.terms} onChange={(e) => setC({ ...c, terms: e.target.checked })} style={{ width: 20, height: 20 }} />
@@ -329,13 +352,20 @@ export default function Book() {
             <>
               <div className="kac-head"><button className="kac-back" aria-label="Back" onClick={() => goBack(1)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button><h2>Choose how to pay</h2></div>
               <div className="kac-body">
+                {MiniSum}
                 {Steps}
-                {([
-                  ["ideal", "iDEAL | Wero", "Pay in EUR with your Dutch bank app"],
-                  ["googlepay", "Google Pay", ""],
-                  ["applepay", "Apple Pay", "Available in Safari on Apple devices"],
-                  ["card", "Cards · Visa, Mastercard, Discover, Diners", ""],
-                ] as [Method, string, string][]).map(([m, label, sub]) => (
+                {(() => {
+                  // Volgorde: wallet van dit apparaat eerst; iDEAL eerst voor bezoekers uit NL. Apple Pay alleen tonen waar het kan.
+                  const all: Record<Method, [Method, string, string]> = {
+                    ideal: ["ideal", "iDEAL | Wero", "Pay in EUR with your Dutch bank app"],
+                    applepay: ["applepay", "Apple Pay", "Fast and secure with Face ID or Touch ID"],
+                    googlepay: ["googlepay", "Google Pay", "Fast and secure with your Google account"],
+                    card: ["card", "Cards · Visa, Mastercard, Discover, Diners", ""],
+                  };
+                  const wallet: Method[] = canApplePay ? ["applepay", "googlepay"] : ["googlepay"];
+                  const order: Method[] = (c.country || "").toUpperCase() === "NL" ? ["ideal", ...wallet, "card"] : [...wallet, "card", "ideal"];
+                  return order.map((m) => all[m]);
+                })().map(([m, label, sub]) => (
                   <div key={m} className={"kac-pm" + (method === m ? " open" : "")}>
                     <button className="kac-pm-h" onClick={() => !busy && startPayment(m)} disabled={busy}>
                       <span>{label}{sub && <span className="kac-pm-off" style={{ display: "block", fontWeight: 400 }}>{sub}</span>}</span>
@@ -350,7 +380,6 @@ export default function Book() {
                             <p style={{ margin: "0 0 8px" }}>Amount: <b>{money(pay.amount, pay.currency)}</b></p>
                             {m === "ideal" && <p className="kac-pm-off" style={{ margin: "0 0 4px" }}>You'll approve the payment in your banking app and return here automatically.</p>}
                             <form action={pay.shopperResultUrl} className="paymentWidgets" data-brands={pay.brands}></form>
-                            <div className="kac-timer">Your spot is held for {Math.max(0, Math.round((pay.expiresAt - now) / 60000))} more minutes.</div>
                           </>
                         )}
                       </div>
@@ -363,8 +392,19 @@ export default function Book() {
             </>
           )}
         </section>
-        {Summary}
+        <div className={"kac-sum-wrap" + (step > 0 && !showSum ? " m-hide" : "")}>{Summary}</div>
       </div>
+      {step === 1 && (
+        <div className="kac-sticky">
+          <div style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{money(total("USD"), "USD")}</div>
+          <button className="kac-btn" onClick={() => {
+            setTouched(true);
+            if (!detailsOk) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+            try { localStorage.setItem("kac_guest", JSON.stringify({ email: c.email, firstname: c.firstname, surname: c.surname, phone: c.phone, country: c.country })); } catch {}
+            setStep(2);
+          }}>Continue</button>
+        </div>
+      )}
       {step === 0 && (
         <div className="kac-sticky">
           <div style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{money(total("USD"), "USD")}</div>
