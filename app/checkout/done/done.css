@@ -68,3 +68,6 @@
 .kac-c1-help { display: flex; justify-content: center; gap: 10px; font-size: 13px; color: var(--muted); padding-bottom: 8px; }
 .kac-c1-help a { color: var(--brand); font-weight: 600; text-decoration: none; }
 .kac-done { gap: 12px; }
+.kac-c1-btn.main { background: var(--brand); border-color: var(--brand); color: #fff; }
+.kac-c1-btn.main svg { color: #fff; }
+.kac-c1-btn.main:hover { background: var(--brand-dark); }

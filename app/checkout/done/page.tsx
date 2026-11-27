@@ -111,7 +111,7 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
         {paid && (actions.length > 0) && (
           <div className="kac-c1-actions" style={{ gridTemplateColumns: `repeat(${actions.length}, 1fr)` }}>
             {actions.map((x) => (
-              <a key={x.label} className="kac-c1-btn" href={x.href} {...(x.ext ? { target: "_blank", rel: "noopener" } : {})}>
+              <a key={x.label} className={"kac-c1-btn" + (x.icon === "ticket" ? " main" : "")} href={x.href} {...(x.ext ? { target: "_blank", rel: "noopener" } : {})}>
                 <Icon k={x.icon} />
                 {x.label}
               </a>
