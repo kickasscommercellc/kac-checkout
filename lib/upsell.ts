@@ -25,3 +25,15 @@ export const UPSELL_DEMO: UpsellCard[] = [
   { id: "cars", label: "Car rental", title: "Explore the island at your own pace", text: "Affiliate widget appears here.", href: "#", cta: "Compare cars" },
   { id: "stay", label: "Where to stay", title: "Still looking for a place to stay?", text: "Affiliate widget appears here.", href: "#", cta: "Find a stay" },
 ];
+
+/**
+ * Earnie-producten op de bevestigingspagina (af te halen bij vertrek).
+ * Later uit de Medusa-backend; nu vaste voorbeelden.
+ */
+export type Product = { id: string; title: string; text: string; price: number; currency: string; tag?: string };
+
+export const PRODUCTS_DEMO: Product[] = [
+  { id: "phone-case", title: "Waterproof phone case", text: "Take photos on and in the water. Fits all iPhones.", price: 19, currency: "USD", tag: "Most popular" },
+  { id: "sunscreen", title: "Reef-safe sunscreen", text: "SPF 50, required on many dive and snorkel trips.", price: 16, currency: "USD" },
+  { id: "dry-bag", title: "Dry bag 10L", text: "Keeps your towel, wallet and keys dry on board.", price: 24, currency: "USD" },
+];

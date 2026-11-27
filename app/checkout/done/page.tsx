@@ -1,7 +1,7 @@
 import "../../book/book.css";
 import "./done.css";
 import { readOrderForDisplay, readDocs } from "../../../lib/order";
-import { UPSELL, UPSELL_DEMO } from "../../../lib/upsell";
+import { UPSELL, PRODUCTS_DEMO } from "../../../lib/upsell";
 import { googleCalendarUrl, directionsUrl, placeText } from "../../../lib/calendar";
 
 const MESSAGES: Record<string, { title: string; text: string; tone: "ok" | "wait" | "bad" }> = {
@@ -105,11 +105,32 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
           </div>
         )}
 
-        {paid && (demo ? UPSELL_DEMO : UPSELL).length > 0 && (
+        {paid && demo && (
+          <section className="kac-up">
+            <h2>Add to your trip</h2>
+            <p className="kac-up-sub">Pick up at departure. No shipping, no hassle.</p>
+            <div className="kac-prod-grid">
+              {PRODUCTS_DEMO.map((p) => (
+                <div key={p.id} className="kac-card kac-prod">
+                  <div className="kac-prod-img" aria-hidden />
+                  {p.tag && <span className="kac-up-label">{p.tag}</span>}
+                  <div className="kac-up-title">{p.title}</div>
+                  <p>{p.text}</p>
+                  <div className="kac-prod-foot">
+                    <b>{new Intl.NumberFormat("en-US", { style: "currency", currency: p.currency, maximumFractionDigits: 0 }).format(p.price)}</b>
+                    <a className="kac-done-btn primary" href="#">Add</a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {paid && UPSELL.length > 0 && (
           <section className="kac-up">
             <h2>Complete your trip</h2>
             <div className="kac-up-grid">
-              {(demo ? UPSELL_DEMO : UPSELL).map((u) => (
+              {UPSELL.map((u) => (
                 <div key={u.id} className={"kac-card kac-up-card" + (u.embed ? " wide" : "")}>
                   <span className="kac-up-label">{u.label}</span>
                   <div className="kac-up-title">{u.title}</div>
