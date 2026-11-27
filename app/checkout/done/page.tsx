@@ -127,6 +127,7 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
                 <div key={p.id} className="kac-card kac-c1-prod">
                   {p.image ? <img src={p.image} alt={p.title} loading="lazy" /> : <div className="kac-c1-ph" aria-hidden />}
                   <div className="kac-c1-pt">{p.title}</div>
+                  <div className="kac-c1-pd">{p.text}</div>
                   <div className="kac-c1-pf">
                     <b>{new Intl.NumberFormat("en-US", { style: "currency", currency: p.currency, maximumFractionDigits: 0 }).format(p.price)}</b>
                     <a href="#">Add</a>

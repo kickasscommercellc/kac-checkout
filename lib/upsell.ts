@@ -33,7 +33,7 @@ export const UPSELL_DEMO: UpsellCard[] = [
 export type Product = { id: string; title: string; text: string; price: number; currency: string; tag?: string; image?: string };
 
 export const PRODUCTS_DEMO: Product[] = [
-  { id: "phone-case", title: "Waterproof phone case", text: "Take photos on and in the water. Fits all iPhones.", price: 19, currency: "USD", tag: "Most popular", image: "/demo/phone-case.svg" },
-  { id: "sunscreen", title: "Reef-safe sunscreen", text: "SPF 50, required on many dive and snorkel trips.", price: 16, currency: "USD", image: "/demo/sunscreen.svg" },
-  { id: "dry-bag", title: "Dry bag 10L", text: "Keeps your towel, wallet and keys dry on board.", price: 24, currency: "USD", image: "/demo/dry-bag.svg" },
+  { id: "phone-case", title: "Waterproof phone case", text: "Take photos in the water. Fits all phones.", price: 19, currency: "USD", tag: "Most popular", image: "/demo/phone-case.svg" },
+  { id: "sunscreen", title: "Reef-safe sunscreen", text: "SPF 50, kind to the coral.", price: 16, currency: "USD", image: "/demo/sunscreen.svg" },
+  { id: "dry-bag", title: "Dry bag 10L", text: "Keeps your phone and keys dry.", price: 24, currency: "USD", image: "/demo/dry-bag.svg" },
 ];

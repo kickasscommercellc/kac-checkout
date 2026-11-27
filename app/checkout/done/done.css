@@ -86,3 +86,4 @@
 .kac-c1-prods { gap: 10px; }
 .kac-c1-prod { padding: 10px; gap: 8px; }
 .kac-c1-help { padding: 6px 0 16px; }
+.kac-c1-pd { font-size: 12px; line-height: 1.35; color: var(--muted); margin-top: -4px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
