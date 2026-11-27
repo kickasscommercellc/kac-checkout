@@ -30,10 +30,10 @@ export const UPSELL_DEMO: UpsellCard[] = [
  * Earnie-producten op de bevestigingspagina (af te halen bij vertrek).
  * Later uit de Medusa-backend; nu vaste voorbeelden.
  */
-export type Product = { id: string; title: string; text: string; price: number; currency: string; tag?: string };
+export type Product = { id: string; title: string; text: string; price: number; currency: string; tag?: string; image?: string };
 
 export const PRODUCTS_DEMO: Product[] = [
-  { id: "phone-case", title: "Waterproof phone case", text: "Take photos on and in the water. Fits all iPhones.", price: 19, currency: "USD", tag: "Most popular" },
-  { id: "sunscreen", title: "Reef-safe sunscreen", text: "SPF 50, required on many dive and snorkel trips.", price: 16, currency: "USD" },
-  { id: "dry-bag", title: "Dry bag 10L", text: "Keeps your towel, wallet and keys dry on board.", price: 24, currency: "USD" },
+  { id: "phone-case", title: "Waterproof phone case", text: "Take photos on and in the water. Fits all iPhones.", price: 19, currency: "USD", tag: "Most popular", image: "/demo/phone-case.svg" },
+  { id: "sunscreen", title: "Reef-safe sunscreen", text: "SPF 50, required on many dive and snorkel trips.", price: 16, currency: "USD", image: "/demo/sunscreen.svg" },
+  { id: "dry-bag", title: "Dry bag 10L", text: "Keeps your towel, wallet and keys dry on board.", price: 24, currency: "USD", image: "/demo/dry-bag.svg" },
 ];

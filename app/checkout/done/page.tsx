@@ -107,12 +107,12 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
 
         {paid && demo && (
           <section className="kac-up">
-            <h2>Add to your trip</h2>
+            <h2>You Might Also Like This</h2>
             <p className="kac-up-sub">Pick up at departure. No shipping, no hassle.</p>
             <div className="kac-prod-grid">
               {PRODUCTS_DEMO.map((p) => (
                 <div key={p.id} className="kac-card kac-prod">
-                  <div className="kac-prod-img" aria-hidden />
+                  {p.image ? <img className="kac-prod-img" src={p.image} alt={p.title} loading="lazy" /> : <div className="kac-prod-img" aria-hidden />}
                   {p.tag && <span className="kac-up-label">{p.tag}</span>}
                   <div className="kac-up-title">{p.title}</div>
                   <p>{p.text}</p>

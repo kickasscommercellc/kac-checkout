@@ -38,7 +38,7 @@
 .kac-prod-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
 @media (min-width: 560px) { .kac-prod-grid { grid-template-columns: repeat(3, 1fr); } }
 .kac-prod { padding: 14px; display: flex; flex-direction: column; gap: 6px; }
-.kac-prod-img { aspect-ratio: 4/3; border-radius: 10px; background: linear-gradient(135deg, #e6eef3, #f4f7f9); margin-bottom: 4px; }
+.kac-prod-img { display: block; width: 100%; object-fit: cover; aspect-ratio: 4/3; border-radius: 10px; background: linear-gradient(135deg, #e6eef3, #f4f7f9); margin-bottom: 4px; }
 .kac-prod p { margin: 0; color: var(--muted); font-size: 13px; flex: 1; }
 .kac-prod-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
 .kac-prod-foot b { font-size: 16px; }
