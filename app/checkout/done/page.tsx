@@ -1,6 +1,7 @@
 import "../../book/book.css";
 import "./done.css";
 import { readOrderForDisplay, readDocs } from "../../../lib/order";
+import { UPSELL, UPSELL_DEMO } from "../../../lib/upsell";
 import { googleCalendarUrl, directionsUrl, placeText } from "../../../lib/calendar";
 
 const MESSAGES: Record<string, { title: string; text: string; tone: "ok" | "wait" | "bad" }> = {
@@ -102,6 +103,33 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
               <li>Please arrive 15 minutes before the start time.</li>
             </ol>
           </div>
+        )}
+
+        {paid && (demo ? UPSELL_DEMO : UPSELL).length > 0 && (
+          <section className="kac-up">
+            <h2>Complete your trip</h2>
+            <div className="kac-up-grid">
+              {(demo ? UPSELL_DEMO : UPSELL).map((u) => (
+                <div key={u.id} className={"kac-card kac-up-card" + (u.embed ? " wide" : "")}>
+                  <span className="kac-up-label">{u.label}</span>
+                  <div className="kac-up-title">{u.title}</div>
+                  {u.text && <p>{u.text}</p>}
+                  {u.embed ? (
+                    <iframe
+                      title={u.title}
+                      className="kac-up-frame"
+                      style={{ height: u.height ?? 400 }}
+                      sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms"
+                      referrerPolicy="no-referrer"
+                      srcDoc={`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><base target="_blank"><style>body{margin:0;font-family:system-ui,sans-serif}</style></head><body>${u.embed}</body></html>`}
+                    />
+                  ) : (
+                    u.href && <a className="kac-done-btn" href={u.href} target="_blank" rel="noopener sponsored">{u.cta ?? "View"}</a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
         <div className="kac-done-help">
