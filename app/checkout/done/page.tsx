@@ -1,6 +1,7 @@
 import "../../book/book.css";
 import "./done.css";
 import { headers } from "next/headers";
+import Upsell from "./Upsell";
 import { readOrderForDisplay, readDocs } from "../../../lib/order";
 import { UPSELL, PRODUCTS_DEMO, BUNDLE_DEMO } from "../../../lib/upsell";
 import { googleCalendarUrl, directionsUrl, placeText } from "../../../lib/calendar";
@@ -28,13 +29,13 @@ const Icon = ({ k }: { k: keyof typeof Ico }) => (
 
 const DEMO = {
   confirmationCode: "DEMO-123456", amount: 178, currency: "USD", provider: "axcess" as const, vendor: "demo", expiresAt: 0,
-  d: { title: "Sunset Sail & Snorkel", date: "2026-12-12", startTime: "16:30", pax: 2, durationMin: 150, email: "you@example.com", meeting: { name: "Harbour Village Marina", address: "Kaya Gobernador N. Debrot, Kralendijk, Bonaire", lat: 12.1636, lng: -68.2797 } },
+  d: { title: "Sunset Sail & Snorkel", date: "2026-12-12", startTime: "16:30", pax: 2, durationMin: 150, email: "you@example.com", firstname: "Demo", surname: "Guest", country: "US" as string, meeting: { name: "Harbour Village Marina", address: "Kaya Gobernador N. Debrot, Kralendijk, Bonaire", lat: 12.1636, lng: -68.2797 } },
 };
 
 const WHATSAPP = process.env.SUPPORT_WHATSAPP?.replace(/[^\d]/g, "") || "";
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "info@kickasscommerce.com";
 
-export default async function Done({ searchParams }: { searchParams: Promise<{ status?: string; code?: string; reason?: string; t?: string; demo?: string; docs?: string }> }) {
+export default async function Done({ searchParams }: { searchParams: Promise<{ status?: string; code?: string; reason?: string; t?: string; demo?: string; docs?: string; added?: string; addfail?: string }> }) {
   const sp = await searchParams;
   const demo = sp.demo === "1";
   const { status = "error", reason, t } = sp;
@@ -62,6 +63,8 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
     actions.push(apple ? { label: "Calendar", icon: "calendar", href: demo ? "#" : `/api/calendar?t=${encodeURIComponent(t!)}` } : { label: "Calendar", icon: "calendar", href: googleCalendarUrl(d, code), ext: true });
     if (dir) actions.push({ label: "Directions", icon: "directions", href: dir, ext: true });
   }
+  // Terugkeer-URL na een upsell-betaling (zelfde pagina, zonder oude added/addfail).
+  const back = "/checkout/done?" + new URLSearchParams(Object.entries(sp).filter(([k, v]) => typeof v === "string" && k !== "added" && k !== "addfail") as [string, string][]).toString();
   const money = o ? new Intl.NumberFormat("en-US", { style: "currency", currency: o.currency }).format(o.amount) : "";
 
   return (
@@ -120,37 +123,17 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
         )}
 
         {paid && demo && (
-          <section className="kac-c1-up">
-            <h2>You Might Also Like</h2>
-            <div className="kac-c1-prods">
-              {PRODUCTS_DEMO.map((p) => (
-                <div key={p.id} className="kac-card kac-c1-prod">
-                  {p.image ? <img src={p.image} alt={p.title} loading="lazy" /> : <div className="kac-c1-ph" aria-hidden />}
-                  <div className="kac-c1-pt">{p.title}</div>
-                  <div className="kac-c1-pd">{p.text}</div>
-                  <div className="kac-c1-pf">
-                    <b>{new Intl.NumberFormat("en-US", { style: "currency", currency: p.currency, maximumFractionDigits: 0 }).format(p.price)}</b>
-                    <a href="#">Add</a>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {(() => {
-              const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: BUNDLE_DEMO.currency, maximumFractionDigits: 0 }).format(n);
-              const save = PRODUCTS_DEMO.reduce((a, p) => a + p.price, 0) - BUNDLE_DEMO.price;
-              return (
-                <div className="kac-c1-bundle">
-                  <div>
-                    <div className="kac-c1-bt">
-                      {BUNDLE_DEMO.title} {fmt(BUNDLE_DEMO.price)} {save > 0 && <span className="kac-c1-save">Save {fmt(save)}</span>}
-                    </div>
-                    <div className="kac-c1-bs">{BUNDLE_DEMO.subtitle}</div>
-                  </div>
-                  <a href="#">Add all</a>
-                </div>
-              );
-            })()}
-          </section>
+          <Upsell
+            products={PRODUCTS_DEMO}
+            bundle={BUNDLE_DEMO}
+            t={t}
+            demo={demo}
+            back={back}
+            added={sp.added}
+            addfail={sp.addfail === "1"}
+            pickup={d ? `${shortDate}${d.meeting?.name ? " · " + d.meeting.name : ""}` : ""}
+            country={d?.country}
+          />
         )}
 
         {paid && UPSELL.length > 0 && (

@@ -151,7 +151,7 @@ export default function Book() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           method: m, travelDate: slot.date,
-          display: { title: info.title, date: slot.date, startTime: slot.startTime, pax: paxCount, durationMin: info.durationMin ?? undefined, meeting: info.meetingPoint ?? null, email: c.email.trim() },
+          display: { title: info.title, date: slot.date, startTime: slot.startTime, pax: paxCount, durationMin: info.durationMin ?? undefined, meeting: info.meetingPoint ?? null, email: c.email.trim(), firstname: c.firstname.trim(), surname: c.surname.trim(), country: (c.country || "NL").toUpperCase(), phone: c.phone.replace(/[\s-]/g, "") },
           customer: {
             firstname: c.firstname.trim(), surname: c.surname.trim(), email: c.email.trim(), phone: c.phone.replace(/[\s-]/g, ""), country: (c.country || "NL").toUpperCase(),
 

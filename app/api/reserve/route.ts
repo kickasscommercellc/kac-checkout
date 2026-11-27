@@ -34,6 +34,10 @@ const Body = z.object({
       durationMin: z.number().int().min(1).max(60 * 24 * 30).optional(),
       meeting: z.object({ name: z.string().max(200).optional(), address: z.string().max(300).optional(), lat: z.number().optional(), lng: z.number().optional() }).nullable().optional(),
       email: z.string().max(200).optional(),
+      firstname: z.string().max(100).optional(),
+      surname: z.string().max(100).optional(),
+      country: z.string().max(2).optional(),
+      phone: z.string().max(30).optional(),
     })
     .optional(),
 });

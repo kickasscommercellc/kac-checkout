@@ -25,6 +25,10 @@ export interface Display {
   durationMin?: number;
   meeting?: { name?: string; address?: string; lat?: number; lng?: number } | null;
   email?: string;
+  firstname?: string;
+  surname?: string;
+  country?: string;
+  phone?: string;
 }
 
 const sign = (data: string) => createHmac("sha256", env("ORDER_SIGNING_SECRET")).update(data).digest("base64url");
@@ -75,6 +79,24 @@ export function readDocs(token: string): Docs | null {
     const given = Buffer.from(sig);
     if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
     return JSON.parse(Buffer.from(data, "base64url").toString()) as Docs;
+  } catch {
+    return null;
+  }
+}
+
+/** Generiek ondertekend token met verlooptijd (voor de upsell-betaling). */
+export function signToken(obj: unknown, scope: string): string {
+  const data = Buffer.from(JSON.stringify(obj)).toString("base64url");
+  return `${data}.${sign(scope + ":" + data)}`;
+}
+export function readToken<T>(token: string, scope: string): T | null {
+  try {
+    const [data, sig] = token.split(".");
+    if (!data || !sig) return null;
+    const expected = Buffer.from(sign(scope + ":" + data));
+    const given = Buffer.from(sig);
+    if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
+    return JSON.parse(Buffer.from(data, "base64url").toString()) as T;
   } catch {
     return null;
   }

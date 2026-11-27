@@ -92,3 +92,40 @@
 .kac-c1-save { background: #e3f4ec; color: var(--accent); font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 8px; }
 .kac-c1-bs { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .kac-c1-bundle a { margin-left: auto; background: var(--accent); color: #fff; border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: 13px; white-space: nowrap; text-decoration: none; }
+/* Upsell-knoppen als <button> */
+.kac-c1-pf button, .kac-c1-bundle button { border: 0; cursor: pointer; font-family: inherit; }
+.kac-c1-pf button { background: var(--brand); color: #fff; border-radius: 999px; padding: 4px 12px; font-weight: 600; font-size: 12px; }
+.kac-c1-bundle button { margin-left: auto; background: var(--accent); color: #fff; border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.kac-c1-added { background: #e3f4ec; color: var(--accent); border-radius: 999px; padding: 4px 10px; font-weight: 700; font-size: 12px; white-space: nowrap; }
+/* Betaalpaneel */
+.kac-sh-dim { position: fixed; inset: 0; background: rgba(15, 28, 36, .45); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.kac-sh { position: relative; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; background: #fff; border-radius: 22px 22px 0 0; padding: 10px 18px 24px; box-shadow: 0 -8px 30px rgba(0,0,0,.15); animation: kacUp .22s ease-out; }
+@keyframes kacUp { from { transform: translateY(40px); opacity: .6; } to { transform: none; opacity: 1; } }
+@media (min-width: 700px) { .kac-sh-dim { align-items: center; } .kac-sh { border-radius: 22px; } }
+.kac-sh-grab { width: 40px; height: 5px; border-radius: 3px; background: #d6dde0; margin: 0 auto 14px; }
+.kac-sh-x { position: absolute; right: 14px; top: 12px; width: 30px; height: 30px; border-radius: 50%; border: 0; background: #f1f4f7; color: var(--muted); font-size: 15px; cursor: pointer; }
+.kac-sh-prod { display: flex; gap: 12px; align-items: center; padding-right: 36px; }
+.kac-sh-prod img { width: 60px; height: 60px; border-radius: 12px; object-fit: cover; }
+.kac-sh-title { font-weight: 700; font-size: 17px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-right: 36px; }
+.kac-sh-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.kac-sh-thumbs { display: flex; gap: 6px; margin: 10px 0 6px; }
+.kac-sh-thumbs img { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; }
+.kac-sh-qty { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 14px; color: var(--muted); }
+.kac-sh-qty div { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; color: var(--text); }
+.kac-sh-qty button { border: 0; background: none; font-size: 20px; color: var(--brand); cursor: pointer; padding: 0 2px; }
+.kac-sh-qty button:disabled { color: #c4ccd3; cursor: default; }
+.kac-sh-pick { display: flex; gap: 10px; align-items: center; background: #f1f4f7; border-radius: 12px; padding: 10px 12px; margin: 14px 0 10px; font-size: 13px; color: var(--muted); }
+.kac-sh-pick svg { color: var(--brand); flex: none; }
+.kac-sh-pick b { display: block; color: var(--text); }
+.kac-sh-tot { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; margin: 4px 2px 6px; }
+.kac-sh-tot b { font-size: 19px; }
+.kac-sh-tot s { color: #9aa6b1; font-weight: 400; font-size: 14px; margin-right: 6px; }
+.kac-sh-lab { font-weight: 700; font-size: 14px; margin-top: 12px; }
+.kac-sh .kac-pm { margin-top: 8px; }
+.kac-sh .kac-pm-h { padding: 14px 16px; font-size: 16px; }
+.kac-sh-trust { text-align: center; font-size: 12px; color: var(--muted); margin: 14px 0 0; }
+/* Melding na betalen */
+.kac-toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); width: calc(100% - 28px); max-width: 520px; background: #1b2833; color: #fff; border-radius: 14px; padding: 12px 14px; display: flex; gap: 10px; align-items: center; font-size: 13px; z-index: 60; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+.kac-toast div { color: #b9c6cf; } .kac-toast b { color: #fff; }
+.kac-toast-ok { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; font-weight: 700; color: #fff; }
+.kac-toast.fail .kac-toast-ok { background: #c0392b; }
