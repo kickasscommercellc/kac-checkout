@@ -43,3 +43,28 @@
 .kac-prod-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; }
 .kac-prod-foot b { font-size: 16px; }
 .kac-prod-foot .kac-done-btn { flex: 0 0 auto; padding: 9px 18px; }
+/* Ontwerp 1: compact + iconen */
+.kac-c1-head { display: flex; gap: 12px; align-items: center; padding: 4px 2px 0; }
+.kac-c1-head h1 { margin: 0; font-size: 22px; }
+.kac-c1-head p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.kac-c1-ok { flex: none; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); }
+.kac-c1-ok.wait { background: #d69e2e; }
+.kac-c1-sum { padding: 14px 16px; }
+.kac-c1-title { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+.kac-c1-meta { color: var(--muted); font-size: 14px; line-height: 1.5; }
+.kac-c1-ref { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 14px; color: var(--muted); }
+.kac-c1-ref b { color: var(--text); }
+.kac-c1-actions { display: grid; gap: 8px; }
+.kac-c1-btn { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 4px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text); text-decoration: none; }
+.kac-c1-btn svg { color: var(--brand); }
+.kac-c1-btn:hover { border-color: var(--brand); }
+.kac-c1-up h2 { font-size: 16px; margin: 6px 0 10px; }
+.kac-c1-prods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kac-c1-prod { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.kac-c1-prod img, .kac-c1-ph { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 10px; background: #e6eef3; }
+.kac-c1-pt { font-size: 13px; font-weight: 600; line-height: 1.25; }
+.kac-c1-pf { margin-top: auto; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+.kac-c1-pf a { background: var(--brand); color: #fff; border-radius: 999px; padding: 4px 12px; font-weight: 600; font-size: 12px; text-decoration: none; }
+.kac-c1-help { display: flex; justify-content: center; gap: 10px; font-size: 13px; color: var(--muted); padding-bottom: 8px; }
+.kac-c1-help a { color: var(--brand); font-weight: 600; text-decoration: none; }
+.kac-done { gap: 12px; }

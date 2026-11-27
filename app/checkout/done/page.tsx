@@ -1,5 +1,6 @@
 import "../../book/book.css";
 import "./done.css";
+import { headers } from "next/headers";
 import { readOrderForDisplay, readDocs } from "../../../lib/order";
 import { UPSELL, PRODUCTS_DEMO } from "../../../lib/upsell";
 import { googleCalendarUrl, directionsUrl, placeText } from "../../../lib/calendar";
@@ -13,6 +14,17 @@ const MESSAGES: Record<string, { title: string; text: string; tone: "ok" | "wait
   expired: { title: "Your reservation expired", text: "We hold your spot for 30 minutes. Please start again; it only takes a minute.", tone: "bad" },
   error: { title: "Something went wrong", text: "No booking was made. Please try again, or contact us if this keeps happening.", tone: "bad" },
 };
+
+
+const Ico = {
+  ticket: <path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h14a1.5 1.5 0 0 1 1.5 1.5V10a2 2 0 0 0 0 4v2.5A1.5 1.5 0 0 1 19 18H5a1.5 1.5 0 0 1-1.5-1.5V14a2 2 0 0 0 0-4zM14 6v12" />,
+  invoice: <path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5" />,
+  calendar: <path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v12A1.5 1.5 0 0 1 19 20H5a1.5 1.5 0 0 1-1.5-1.5v-12A1.5 1.5 0 0 1 5 5zM3.5 10h17M8 3v4M16 3v4" />,
+  directions: <path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11zM12 12.3a2.3 2.3 0 1 0 0-4.6 2.3 2.3 0 0 0 0 4.6z" />,
+};
+const Icon = ({ k }: { k: keyof typeof Ico }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{Ico[k]}</svg>
+);
 
 const DEMO = {
   confirmationCode: "DEMO-123456", amount: 178, currency: "USD", provider: "axcess" as const, vendor: "demo", expiresAt: 0,
@@ -37,78 +49,87 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
   const dir = d ? directionsUrl(d) : null;
   const wa = WHATSAPP ? `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hi! Question about my booking ${code ?? ""}`.trim())}` : null;
   const dateText = d ? new Date(d.date + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "";
+  const shortDate = d ? new Date(d.date + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }) : "";
+  // Agenda: Apple-apparaten krijgen het .ics-bestand, de rest Google Calendar.
+  const ua = (await headers()).get("user-agent") || "";
+  const apple = /iPhone|iPad|Macintosh/.test(ua);
+  const actions: { label: string; icon: "ticket" | "invoice" | "calendar" | "directions"; href: string; ext?: boolean }[] = [];
+  if (paid && docs) {
+    docs.tickets.forEach((_, i) => actions.push({ label: docs.tickets.length > 1 ? `Ticket ${i + 1}` : "Ticket", icon: "ticket", href: docUrl("ticket", i) }));
+    if (docs.invoice) actions.push({ label: "Invoice", icon: "invoice", href: docUrl("invoice") });
+  }
+  if (paid && d && code) {
+    actions.push(apple ? { label: "Calendar", icon: "calendar", href: demo ? "#" : `/api/calendar?t=${encodeURIComponent(t!)}` } : { label: "Calendar", icon: "calendar", href: googleCalendarUrl(d, code), ext: true });
+    if (dir) actions.push({ label: "Directions", icon: "directions", href: dir, ext: true });
+  }
   const money = o ? new Intl.NumberFormat("en-US", { style: "currency", currency: o.currency }).format(o.amount) : "";
 
   return (
     <main className="kac">
       <div className="kac-done">
-        <div className={`kac-done-hero ${m.tone}`}>
-          <div className="kac-done-icon" aria-hidden>
-            {m.tone === "ok" ? (
-              <svg viewBox="0 0 24 24" width="30" height="30"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            ) : m.tone === "wait" ? (
-              <svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2.2" /><path d="M12 7v5l3 2" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
-            ) : (
+        {paid ? (
+          <div className="kac-c1-head">
+            <span className={`kac-c1-ok ${m.tone}`} aria-hidden>
+              {m.tone === "ok" ? (
+                <svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="8" fill="none" stroke="#fff" strokeWidth="2.4" /><path d="M12 8v4.5l2.5 1.5" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" /></svg>
+              )}
+            </span>
+            <div>
+              <h1>{m.tone === "ok" ? "You're booked!" : m.title}</h1>
+              <p>{m.tone === "ok" ? (d?.email ? `Tickets sent to ${d.email}` : "Your tickets are on their way to your inbox.") : m.text}</p>
+            </div>
+          </div>
+        ) : (
+          <div className={`kac-done-hero ${m.tone}`}>
+            <div className="kac-done-icon" aria-hidden>
               <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 7v6M12 16.5v.5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" /></svg>
+            </div>
+            <h1>{m.title}</h1>
+            <p>{m.text}</p>
+          </div>
+        )}
+
+        {paid && (d || code) && (
+          <div className="kac-card kac-c1-sum">
+            {d && <div className="kac-c1-title">{d.title}</div>}
+            {d && (
+              <div className="kac-c1-meta">
+                {[shortDate, d.startTime, d.pax ? `${d.pax} ${d.pax === 1 ? "person" : "people"}` : null].filter(Boolean).join(" · ")}
+              </div>
+            )}
+            {d && placeText(d) && <div className="kac-c1-meta">{placeText(d)}</div>}
+            {code && (
+              <div className="kac-c1-ref">
+                Ref <b>{code}</b>{o ? ` · ${money} paid` : ""}
+              </div>
             )}
           </div>
-          <h1>{m.title}</h1>
-          <p>{m.text}</p>
-          {paid && code && (
-            <div className="kac-done-ref">
-              Booking reference <strong>{code}</strong>
-            </div>
-          )}
-        </div>
-
-        {paid && d && (
-          <div className="kac-card kac-done-card">
-            <div className="kac-done-title">{d.title}</div>
-            <dl className="kac-done-list">
-              <div><dt>Date</dt><dd>{dateText}</dd></div>
-              {d.startTime && <div><dt>Time</dt><dd>{d.startTime}</dd></div>}
-              {d.pax && <div><dt>Guests</dt><dd>{d.pax} {d.pax === 1 ? "person" : "people"}</dd></div>}
-              {d.meeting && placeText(d) && <div><dt>Meeting point</dt><dd>{placeText(d)}</dd></div>}
-              {o && <div><dt>Paid</dt><dd>{money} · all fees included</dd></div>}
-              {d.email && <div><dt>Tickets sent to</dt><dd>{d.email}</dd></div>}
-            </dl>
-            <div className="kac-done-actions">
-              <a className="kac-done-btn primary" href={googleCalendarUrl(d, code!)} target="_blank" rel="noopener">Add to Google Calendar</a>
-              <a className="kac-done-btn" href={demo ? "#" : `/api/calendar?t=${encodeURIComponent(t!)}`}>Apple / Outlook calendar</a>
-              {dir && <a className="kac-done-btn" href={dir} target="_blank" rel="noopener">Get directions</a>}
-            </div>
-          </div>
         )}
 
-        {paid && docs && (docs.tickets.length > 0 || docs.invoice) && (
-          <div className="kac-card kac-done-card">
-            <div className="kac-done-title">Your documents</div>
-            <div className="kac-done-actions" style={{ marginTop: 0 }}>
-              {docs.tickets.map((_, i) => (
-                <a key={i} className="kac-done-btn primary" href={docUrl("ticket", i)}>
-                  Download ticket{docs.tickets.length > 1 ? ` ${i + 1}` : ""} (PDF)
-                </a>
-              ))}
-              {docs.invoice && <a className="kac-done-btn" href={docUrl("invoice")}>Download invoice (PDF)</a>}
-            </div>
+        {paid && (actions.length > 0) && (
+          <div className="kac-c1-actions" style={{ gridTemplateColumns: `repeat(${actions.length}, 1fr)` }}>
+            {actions.map((x) => (
+              <a key={x.label} className="kac-c1-btn" href={x.href} {...(x.ext ? { target: "_blank", rel: "noopener" } : {})}>
+                <Icon k={x.icon} />
+                {x.label}
+              </a>
+            ))}
           </div>
         )}
-
 
         {paid && demo && (
-          <section className="kac-up">
+          <section className="kac-c1-up">
             <h2>You Might Also Like</h2>
-            <p className="kac-up-sub">Pick up at departure. No shipping, no hassle.</p>
-            <div className="kac-prod-grid">
+            <div className="kac-c1-prods">
               {PRODUCTS_DEMO.map((p) => (
-                <div key={p.id} className="kac-card kac-prod">
-                  {p.image ? <img className="kac-prod-img" src={p.image} alt={p.title} loading="lazy" /> : <div className="kac-prod-img" aria-hidden />}
-                  {p.tag && <span className="kac-up-label">{p.tag}</span>}
-                  <div className="kac-up-title">{p.title}</div>
-                  <p>{p.text}</p>
-                  <div className="kac-prod-foot">
+                <div key={p.id} className="kac-card kac-c1-prod">
+                  {p.image ? <img src={p.image} alt={p.title} loading="lazy" /> : <div className="kac-c1-ph" aria-hidden />}
+                  <div className="kac-c1-pt">{p.title}</div>
+                  <div className="kac-c1-pf">
                     <b>{new Intl.NumberFormat("en-US", { style: "currency", currency: p.currency, maximumFractionDigits: 0 }).format(p.price)}</b>
-                    <a className="kac-done-btn primary" href="#">Add</a>
+                    <a href="#">Add</a>
                   </div>
                 </div>
               ))}
@@ -143,12 +164,13 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
           </section>
         )}
 
-        <div className="kac-done-help">
+        <div className={paid ? "kac-c1-help" : "kac-done-help"}>
           {!paid && (
             <a className="kac-done-btn primary" href="javascript:history.go(-2)">Try again</a>
           )}
-          {wa && <a className="kac-done-btn wa" href={wa} target="_blank" rel="noopener">Questions? WhatsApp us</a>}
-          <a className="kac-done-btn" href={`mailto:${SUPPORT_EMAIL}${code ? `?subject=${encodeURIComponent("Booking " + code)}` : ""}`}>Email us</a>
+          {paid && <span>Questions?</span>}
+          {wa && <a className={paid ? "" : "kac-done-btn wa"} href={wa} target="_blank" rel="noopener">WhatsApp us</a>}
+          <a className={paid ? "" : "kac-done-btn"} href={`mailto:${SUPPORT_EMAIL}${code ? `?subject=${encodeURIComponent("Booking " + code)}` : ""}`}>Email us</a>
         </div>
         {!paid && reason && <p className="kac-done-tech">Technical info: {reason}</p>}
       </div>
