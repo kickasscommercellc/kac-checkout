@@ -94,16 +94,6 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
           </div>
         )}
 
-        {paid && (
-          <div className="kac-card kac-done-next">
-            <h2>What happens next</h2>
-            <ol>
-              <li>Check your inbox for your confirmation and tickets (and your spam folder, just in case).</li>
-              <li>Show your ticket on your phone when you arrive. No need to print.</li>
-              <li>Please arrive 15 minutes before the start time.</li>
-            </ol>
-          </div>
-        )}
 
         {paid && demo && (
           <section className="kac-up">
