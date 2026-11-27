@@ -2,7 +2,7 @@ import "../../book/book.css";
 import "./done.css";
 import { headers } from "next/headers";
 import { readOrderForDisplay, readDocs } from "../../../lib/order";
-import { UPSELL, PRODUCTS_DEMO } from "../../../lib/upsell";
+import { UPSELL, PRODUCTS_DEMO, BUNDLE_DEMO } from "../../../lib/upsell";
 import { googleCalendarUrl, directionsUrl, placeText } from "../../../lib/calendar";
 
 const MESSAGES: Record<string, { title: string; text: string; tone: "ok" | "wait" | "bad" }> = {
@@ -135,6 +135,21 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
                 </div>
               ))}
             </div>
+            {(() => {
+              const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: BUNDLE_DEMO.currency, maximumFractionDigits: 0 }).format(n);
+              const save = PRODUCTS_DEMO.reduce((a, p) => a + p.price, 0) - BUNDLE_DEMO.price;
+              return (
+                <div className="kac-c1-bundle">
+                  <div>
+                    <div className="kac-c1-bt">
+                      {BUNDLE_DEMO.title} {fmt(BUNDLE_DEMO.price)} {save > 0 && <span className="kac-c1-save">Save {fmt(save)}</span>}
+                    </div>
+                    <div className="kac-c1-bs">{BUNDLE_DEMO.subtitle}</div>
+                  </div>
+                  <a href="#">Add all</a>
+                </div>
+              );
+            })()}
           </section>
         )}
 

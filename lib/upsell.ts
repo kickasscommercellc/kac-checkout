@@ -37,3 +37,6 @@ export const PRODUCTS_DEMO: Product[] = [
   { id: "sunscreen", title: "Reef-safe sunscreen", text: "SPF 50, kind to the coral.", price: 16, currency: "USD", image: "/demo/sunscreen.svg" },
   { id: "dry-bag", title: "Dry bag 10L", text: "Keeps your phone and keys dry.", price: 24, currency: "USD", image: "/demo/dry-bag.svg" },
 ];
+
+/** Bundel onder de producten (ontwerp A). Prijs in dezelfde valuta als de producten. */
+export const BUNDLE_DEMO = { title: "All 3 for", price: 49, currency: "USD", subtitle: "Everything you need on board" };
