@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { confirmReserved, abortReserved } from "../../../../lib/bokun";
+import { confirmReserved, abortReserved, travelDocLinks } from "../../../../lib/bokun";
 import { getPaymentStatus, classifyResultCode } from "../../../../lib/axcess";
-import { decodeOrder } from "../../../../lib/order";
+import { decodeOrder, encodeDocs } from "../../../../lib/order";
 import { baseUrl } from "../../../../lib/baseurl";
 
 /**
@@ -11,10 +11,11 @@ import { baseUrl } from "../../../../lib/baseurl";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   let reason = "";
+  let docs = "";
   const token = url.searchParams.get("order") ?? "";
   const done = (status: string, code?: string) =>
     NextResponse.redirect(
-      `${baseUrl(req)}/checkout/done?status=${status}${code ? `&code=${encodeURIComponent(code)}&t=${encodeURIComponent(token)}` : ""}${reason && !["success", "review"].includes(status) ? `&reason=${encodeURIComponent(reason)}` : ""}`,
+      `${baseUrl(req)}/checkout/done?status=${status}${code ? `&code=${encodeURIComponent(code)}&t=${encodeURIComponent(token)}` : ""}${docs ? `&docs=${encodeURIComponent(docs)}` : ""}${reason && !["success", "review"].includes(status) ? `&reason=${encodeURIComponent(reason)}` : ""}`,
     );
 
   let order;
@@ -47,12 +48,15 @@ export async function GET(req: Request) {
   }
 
   try {
-    await confirmReserved(order.confirmationCode, {
+    const confirmed = await confirmReserved(order.confirmationCode, {
       amount: order.amount,
       currency: order.currency,
       transactionId: `AXC-${payment.id}`,
       cardBrand: payment.paymentBrand,
     });
+    const links = travelDocLinks(confirmed);
+    console.log("Bókun travelDocuments", { code: order.confirmationCode, keys: Object.keys((confirmed as any)?.travelDocuments ?? {}), links });
+    if (links.tickets.length || links.invoice) docs = encodeDocs({ code: order.confirmationCode, ...links });
   } catch (err) {
     console.error("BETAALD MAAR NIET BEVESTIGD", { confirmationCode: order.confirmationCode, axcess: payment.id, err });
     return done("attention", order.confirmationCode);

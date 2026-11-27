@@ -50,6 +50,44 @@ async function bokunFetch<T>(method: "GET" | "POST", pathWithQuery: string, body
 }
 
 /**
+ * Ticket/factuur-PDF ophalen. Bókun geeft in de confirm-response (travelDocuments) een downloadpad terug.
+ * Alleen paden binnen Bókun worden opgehaald (geen willekeurige URL's).
+ */
+export async function bokunPdf(pathOrUrl: string): Promise<Response | null> {
+  const base = new URL(env("BOKUN_BASE_URL"));
+  let url: URL;
+  try {
+    url = new URL(pathOrUrl, base);
+  } catch {
+    return null;
+  }
+  const isBokunHost = url.host === base.host || /(^|\.)bokun\.(io|is)$/.test(url.hostname);
+  if (url.protocol !== "https:" || !isBokunHost) return null;
+  const headers: Record<string, string> = { Accept: "application/pdf" };
+  if (url.host === base.host) {
+    const accessKey = env("BOKUN_ACCESS_KEY");
+    const date = bokunDate();
+    const pq = url.pathname + url.search;
+    headers["X-Bokun-Date"] = date;
+    headers["X-Bokun-AccessKey"] = accessKey;
+    headers["X-Bokun-Signature"] = bokunSignature(date, accessKey, "GET", pq, env("BOKUN_SECRET_KEY"));
+  }
+  const res = await fetch(url, { headers, cache: "no-store" });
+  return res.ok ? res : null;
+}
+
+/** Downloadpaden voor ticket(s) en factuur uit een confirm/submit-response. */
+export function travelDocLinks(resp: any): { tickets: string[]; invoice: string | null } {
+  const td = resp?.travelDocuments ?? {};
+  const tickets = (Array.isArray(td.activityTickets) ? td.activityTickets : [])
+    .map((t: any) => t?.ticket)
+    .filter((x: unknown): x is string => typeof x === "string" && x.length > 0);
+  const inv = td.invoice;
+  const invoice = typeof inv === "string" ? inv : inv?.invoice ?? inv?.pdf ?? inv?.link ?? inv?.url ?? null;
+  return { tickets, invoice: typeof invoice === "string" ? invoice : null };
+}
+
+/**
  * BookingRequest zoals Bókun die verwacht (directBooking).
  * Velden volgens de REST v1 OpenAPI-spec; de exacte inhoud van passengers/answers
  * volgt uit de checkout options-response en wordt in fase 1 met de test-UI geverifieerd.

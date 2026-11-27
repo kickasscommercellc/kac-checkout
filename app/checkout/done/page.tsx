@@ -1,6 +1,6 @@
 import "../../book/book.css";
 import "./done.css";
-import { readOrderForDisplay } from "../../../lib/order";
+import { readOrderForDisplay, readDocs } from "../../../lib/order";
 import { googleCalendarUrl, directionsUrl, placeText } from "../../../lib/calendar";
 
 const MESSAGES: Record<string, { title: string; text: string; tone: "ok" | "wait" | "bad" }> = {
@@ -21,7 +21,7 @@ const DEMO = {
 const WHATSAPP = process.env.SUPPORT_WHATSAPP?.replace(/[^\d]/g, "") || "";
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || "info@kickasscommerce.com";
 
-export default async function Done({ searchParams }: { searchParams: Promise<{ status?: string; code?: string; reason?: string; t?: string; demo?: string }> }) {
+export default async function Done({ searchParams }: { searchParams: Promise<{ status?: string; code?: string; reason?: string; t?: string; demo?: string; docs?: string }> }) {
   const sp = await searchParams;
   const demo = sp.demo === "1";
   const { status = "error", reason, t } = sp;
@@ -31,6 +31,8 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
   const o = demo ? DEMO : t ? readOrderForDisplay(t) : null;
   const d = o && code && o.confirmationCode === code ? o.d : undefined;
   const paid = m.tone !== "bad";
+  const docs = demo ? { code: "DEMO", tickets: ["#"], invoice: "#" } : sp.docs ? readDocs(sp.docs) : null;
+  const docUrl = (kind: string, i = 0) => (demo ? "#" : `/api/docs?d=${encodeURIComponent(sp.docs!)}&kind=${kind}&i=${i}`);
   const dir = d ? directionsUrl(d) : null;
   const wa = WHATSAPP ? `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hi! Question about my booking ${code ?? ""}`.trim())}` : null;
   const dateText = d ? new Date(d.date + "T12:00:00Z").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "";
@@ -73,6 +75,20 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
               <a className="kac-done-btn primary" href={googleCalendarUrl(d, code!)} target="_blank" rel="noopener">Add to Google Calendar</a>
               <a className="kac-done-btn" href={demo ? "#" : `/api/calendar?t=${encodeURIComponent(t!)}`}>Apple / Outlook calendar</a>
               {dir && <a className="kac-done-btn" href={dir} target="_blank" rel="noopener">Get directions</a>}
+            </div>
+          </div>
+        )}
+
+        {paid && docs && (docs.tickets.length > 0 || docs.invoice) && (
+          <div className="kac-card kac-done-card">
+            <div className="kac-done-title">Your documents</div>
+            <div className="kac-done-actions" style={{ marginTop: 0 }}>
+              {docs.tickets.map((_, i) => (
+                <a key={i} className="kac-done-btn primary" href={docUrl("ticket", i)}>
+                  Download ticket{docs.tickets.length > 1 ? ` ${i + 1}` : ""} (PDF)
+                </a>
+              ))}
+              {docs.invoice && <a className="kac-done-btn" href={docUrl("invoice")}>Download invoice (PDF)</a>}
             </div>
           </div>
         )}

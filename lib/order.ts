@@ -58,3 +58,24 @@ export function decodeOrder(token: string): Order {
   if (Date.now() > o.expiresAt) throw new Error("Reservering verlopen");
   return o;
 }
+
+/** Ondertekend token met de downloadpaden van ticket(s) en factuur, voor de bevestigingspagina. */
+export interface Docs { code: string; tickets: string[]; invoice: string | null }
+
+export function encodeDocs(d: Docs): string {
+  const data = Buffer.from(JSON.stringify(d)).toString("base64url");
+  return `${data}.${sign("docs:" + data)}`;
+}
+
+export function readDocs(token: string): Docs | null {
+  try {
+    const [data, sig] = token.split(".");
+    if (!data || !sig) return null;
+    const expected = Buffer.from(sign("docs:" + data));
+    const given = Buffer.from(sig);
+    if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
+    return JSON.parse(Buffer.from(data, "base64url").toString()) as Docs;
+  } catch {
+    return null;
+  }
+}
