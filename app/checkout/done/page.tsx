@@ -97,7 +97,7 @@ export default async function Done({ searchParams }: { searchParams: Promise<{ s
 
         {paid && demo && (
           <section className="kac-up">
-            <h2>You Might Also Like This</h2>
+            <h2>You Might Also Like</h2>
             <p className="kac-up-sub">Pick up at departure. No shipping, no hassle.</p>
             <div className="kac-prod-grid">
               {PRODUCTS_DEMO.map((p) => (
